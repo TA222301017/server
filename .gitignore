@@ -1,0 +1,23 @@
+go.sum
+
+# key files
+*.pem
+
+# log files
+*.log
+
+# environment variables / config files
+*.env
+*.config
+
+# databases
+*.db
+*.sqlite
+
+# vscode
+.vscode
+
+# build files
+build
+*.exe
+udp-services
