@@ -20,4 +20,4 @@ go.sum
 # build files
 build
 *.exe
-udp-services
+main

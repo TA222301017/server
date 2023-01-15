@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -113,10 +114,16 @@ func loadKeys() error {
 }
 
 func Keys() {
-	if err := loadKeys(); err != nil {
+	path := filepath.Join(".", "keys")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		os.Mkdir(path, os.ModePerm)
+	}
+
+	err := loadKeys()
+	if err != nil {
 		log.Printf("Failed to load keys : %v\n", err)
 		if err := generateKeys(); err != nil {
-			log.Panicf("Failed to load keys : %v\n", err)
+			log.Panicf("Failed to generate keys : %v\n", err)
 		}
 	}
 }
