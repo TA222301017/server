@@ -30,12 +30,12 @@ func init() {
 	AppName = os.Getenv("APP_NAME")
 
 	expirationDuration, err := strconv.ParseInt(os.Getenv("API_JWT_EXPIRATION"), 10, 64)
-	if err != nil {
+	if err == nil {
 		TokenExpirationDuration = expirationDuration
 	}
 
 	refreshThreshold, err := strconv.ParseInt(os.Getenv("API_JWT_REFRESH_THRESHOLD"), 10, 64)
-	if err != nil {
+	if err == nil {
 		TokenRefreshThreshold = refreshThreshold
 	}
 }

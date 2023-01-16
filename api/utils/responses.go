@@ -60,7 +60,6 @@ func MakeResponseCreated(c *gin.Context, data interface{}, msg ...string) {
 }
 
 func MakeResponseError(c *gin.Context, status int, msg string, err string) {
-
 	v, exists := c.Get("token")
 	token, ok := v.(string)
 	if !exists || !ok {
@@ -73,5 +72,45 @@ func MakeResponseError(c *gin.Context, status int, msg string, err string) {
 		Msg:        msg,
 		Error:      err,
 		Token:      token,
+	})
+}
+
+func ResponseUnimplemented(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, template.BaseResponse{
+		Data:       nil,
+		Pagination: nil,
+		Msg:        "not implemented yet, come back later",
+		Error:      "",
+		Token:      "",
+	})
+}
+
+func ResponseServerError(c *gin.Context, err error) {
+	c.JSON(http.StatusInternalServerError, template.BaseResponse{
+		Data:       nil,
+		Pagination: nil,
+		Msg:        "internal server error, please try again later",
+		Error:      err.Error(),
+		Token:      "",
+	})
+}
+
+func ResponseBadRequest(c *gin.Context, err error) {
+	c.JSON(http.StatusBadRequest, template.BaseResponse{
+		Data:       nil,
+		Pagination: nil,
+		Msg:        "bad request, check the api docs",
+		Error:      err.Error(),
+		Token:      "",
+	})
+}
+
+func ResponseUnauthorized(c *gin.Context, err error) {
+	c.JSON(http.StatusUnauthorized, template.BaseResponse{
+		Data:       nil,
+		Pagination: nil,
+		Msg:        "you are unauthorized",
+		Error:      err.Error(),
+		Token:      "",
 	})
 }
