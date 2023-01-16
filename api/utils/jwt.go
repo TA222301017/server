@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 )
 
@@ -78,4 +79,18 @@ func VerifyJWT(tokenString string) (*CustomClaims, error) {
 	} else {
 		return nil, UncheckedTokenError
 	}
+}
+
+func GetClaimsFromContext(c *gin.Context) (*CustomClaims, error) {
+	v, ok := c.Get("claims")
+	if !ok {
+		return nil, errors.New("failed to get token claims")
+	}
+
+	claims, ok := v.(*CustomClaims)
+	if !ok {
+		return nil, errors.New("failed to cast token claims")
+	}
+
+	return claims, nil
 }
