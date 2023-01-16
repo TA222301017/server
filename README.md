@@ -1,5 +1,5 @@
 # Server
-Implementasi dari subsistem Server yang mencangkup Admin Panel Service, Access Rule Service, dan Logging Service.
+Implementasi dari subsistem Server yang mencangkup Admin Panel Service, Access Rule Service, dan Logging Service. Dokumentasi API Admin Panel Service dapat dilihat di [link ini](https://documenter.getpostman.com/view/11921205/2s8YmNPhAE).
 
 ## Software yang Dibutuhkan
 - Go (setidaknya versi 1.19.4)
