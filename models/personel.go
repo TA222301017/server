@@ -2,7 +2,7 @@ package models
 
 type Personel struct {
 	BaseModel
-	IDNumber    string `json:"id_number"`
+	IDNumber    string `json:"id_number" gorm:"unique"`
 	Name        string `json:"name"`
 	Status      bool   `json:"status"`
 	RoleID      uint64 `json:"-"`
