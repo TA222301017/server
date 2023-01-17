@@ -50,6 +50,11 @@ func ResgisterPersonel(app *gin.Engine) {
 			return
 		}
 
+		if err := body.Validate(); err != nil {
+			utils.ResponseBadRequest(c, err)
+			return
+		}
+
 		data, err := services.RegisterPersonel(body)
 		if err != nil {
 			utils.ResponseServerError(c, err)
@@ -60,6 +65,25 @@ func ResgisterPersonel(app *gin.Engine) {
 	})
 
 	router.PATCH("/:personel_id", func(c *gin.Context) {
-		utils.ResponseUnimplemented(c)
+		temp := c.Param("personel_id")
+		personelID, err := strconv.ParseUint(temp, 10, 64)
+		if err != nil {
+			utils.ResponseBadRequest(c, err)
+			return
+		}
+
+		var body template.EditPersonelRequest
+		if err := c.Bind(&body); err != nil {
+			utils.ResponseServerError(c, err)
+			return
+		}
+
+		data, err := services.EditPersonel(body, personelID)
+		if err != nil {
+			utils.ResponseServerError(c, err)
+			return
+		}
+
+		utils.MakeResponseSuccess(c, data, nil)
 	})
 }

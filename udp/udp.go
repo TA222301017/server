@@ -6,6 +6,7 @@ import (
 
 	"server/udp/setup"
 	"server/udp/template"
+	"server/udp/usecases"
 	"server/udp/utils"
 )
 
@@ -16,11 +17,14 @@ type Request struct {
 
 func handlePacket(conn *net.UDPConn, request <-chan *Request) {
 	for r := range request {
-		log.Printf("| %s\n", string(r.Packet.Data))
-
 		switch r.Packet.OpCode {
 		case template.KeyExchange:
-			log.Printf("| UNIMPLEMENTED!\n")
+			log.Printf("| 0x%x | KEY EXCHANGE\n", r.Packet.OpCode)
+			res, err := usecases.KeyExchange(*r.Packet)
+			if err != nil {
+				log.Printf("| %s\n", err)
+			}
+			conn.WriteToUDP(res.Bytes(), r.RemoteAddr)
 		case template.AddAccessRule:
 			log.Printf("| UNIMPLEMENTED!\n")
 		case template.EditAccessRule:

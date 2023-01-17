@@ -1,14 +1,35 @@
 package usecases
 
-// func KeyExchange(p template.BasePacket) {
-// 	var temp []byte
+import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"encoding/hex"
+	"server/udp/setup"
+	"server/udp/template"
+	"server/udp/utils"
+	"strings"
+)
 
-// 	temp = p.Data[1:8]
-// 	lockID := binary.BigEndian.Uint64(temp)
+func KeyExchange(p template.BasePacket) (*template.BasePacket, error) {
+	lockID := strings.ToUpper(hex.EncodeToString(p.Data[:16]))
+	pLen := len(p.Data)
 
-// 	pubKey = p.Data[8:41]
+	x, y := elliptic.Unmarshal(elliptic.P224(), p.Data[16:pLen])
+	pubKey := ecdsa.PublicKey{
+		Curve: elliptic.P224(),
+		X:     x,
+		Y:     y,
+	}
 
-// 	ecdsa.
+	if err := utils.SaveECDSAPublicKey(pubKey, lockID); err != nil {
+		return nil, err
+	}
 
-// 	publicKey, err := x509.ParsePKIXPublicKey(pubKey)
-// }
+	serverPubKey := setup.PublicKey
+	serverPubKeyBytes := elliptic.Marshal(elliptic.P224(), serverPubKey.X, serverPubKey.Y)
+
+	return utils.MakePacket(
+		template.KeyExchange,
+		append(p.Data[:16], serverPubKeyBytes...),
+	)
+}
