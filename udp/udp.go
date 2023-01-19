@@ -16,36 +16,50 @@ type Request struct {
 }
 
 func handlePacket(conn *net.UDPConn, request <-chan *Request) {
+	var (
+		res *template.BasePacket
+		err error
+	)
+
 	for r := range request {
 		switch r.Packet.OpCode {
 		case template.KeyExchange:
 			log.Printf("| 0x%x | KEY EXCHANGE\n", r.Packet.OpCode)
-			res, err := usecases.KeyExchange(*r.Packet, r.RemoteAddr)
-			if err != nil {
-				log.Printf("| %s\n", err)
-			}
-			conn.WriteToUDP(res.Bytes(), r.RemoteAddr)
+			res, err = usecases.KeyExchange(*r.Packet, r.RemoteAddr)
+
 		case template.AddAccessRule:
 			log.Printf("| UNIMPLEMENTED!\n")
+			res, err = utils.MakePacket(r.Packet.OpCode, r.Packet.Data)
+
 		case template.EditAccessRule:
 			log.Printf("| UNIMPLEMENTED!\n")
+			res, err = utils.MakePacket(r.Packet.OpCode, r.Packet.Data)
+
 		case template.DeleteAccessRule:
 			log.Printf("| UNIMPLEMENTED!\n")
+			res, err = utils.MakePacket(r.Packet.OpCode, r.Packet.Data)
+
 		case template.LogAccessEvent:
-			log.Printf("| UNIMPLEMENTED!\n")
+			log.Printf("| 0x%x | LOG ACCESS EVENT\n", r.Packet.OpCode)
+			res, err = usecases.LogAccessEvent(*r.Packet)
+
 		case template.LogRSSIEvent:
-			log.Printf("| UNIMPLEMENTED!\n")
+			log.Printf("| 0x%x | LOG RSSI EVENT\n", r.Packet.OpCode)
+			res, err = usecases.LogRSSIEvent(*r.Packet)
+
 		case template.LogHealthcheckEvent:
 			log.Printf("| UNIMPLEMENTED!\n")
+			res, err = utils.MakePacket(r.Packet.OpCode, r.Packet.Data)
+
 		default:
 			log.Printf("| unknown op code, echoing packet data\n")
-			response, err := utils.MakePacket(r.Packet.OpCode, r.Packet.Data)
-			if err != nil {
-				log.Printf("| %s\n", err)
-			}
-			conn.WriteToUDP(response.Bytes(), r.RemoteAddr)
+			res, err = utils.MakePacket(r.Packet.OpCode, r.Packet.Data)
 		}
 
+		conn.WriteToUDP(res.Bytes(), r.RemoteAddr)
+		if err != nil {
+			log.Printf("| %s\n", err)
+		}
 	}
 }
 

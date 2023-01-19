@@ -14,7 +14,7 @@ func RegisterKey(app *gin.Engine) {
 
 	router.GET("/", func(c *gin.Context) {
 		params := utils.ParseSearchParameter(c)
-		keyword := c.GetString("keyword")
+		keyword := c.Query("keyword")
 		status := c.GetBool("status")
 
 		data, pagination, err := services.GetKeys(*params, keyword, status)
@@ -27,7 +27,7 @@ func RegisterKey(app *gin.Engine) {
 	})
 
 	router.GET("/:key_id", func(c *gin.Context) {
-		temp := c.GetString("key_id")
+		temp := c.Query("key_id")
 		keyID, err := strconv.ParseUint(temp, 10, 64)
 		if err != nil {
 			utils.ResponseBadRequest(c, err)
@@ -65,7 +65,7 @@ func RegisterKey(app *gin.Engine) {
 	})
 
 	router.PATCH("/:key_id", func(c *gin.Context) {
-		temp := c.GetString("key_id")
+		temp := c.Query("key_id")
 		keyID, err := strconv.ParseUint(temp, 10, 64)
 		if err != nil {
 			utils.ResponseBadRequest(c, err)

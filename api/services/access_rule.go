@@ -99,6 +99,10 @@ func EditAccessRule(e template.EditAccessRule, userID uint64, accessRuleID uint6
 
 	accessRule.CreatorID = userID
 
+	if _, err := usecases.EditAccessRule(accessRule); err != nil {
+		return nil, err
+	}
+
 	if err := db.Save(&accessRule).Error; err != nil {
 		return nil, err
 	}
@@ -113,6 +117,15 @@ func EditAccessRule(e template.EditAccessRule, userID uint64, accessRuleID uint6
 
 func DeleteAccessRule(accessRuleID uint64) error {
 	db := setup.DB
+
+	var accessRule models.AccessRule
+	if err := db.First(&accessRule, accessRuleID).Preload("Lock").Error; err != nil {
+		return err
+	}
+
+	if _, err := usecases.DeleteAccessRule(accessRuleID, accessRule.Lock.IpAddress); err != nil {
+		return err
+	}
 
 	return db.Delete(&models.AccessRule{}, accessRuleID).Error
 }

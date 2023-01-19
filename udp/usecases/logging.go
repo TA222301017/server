@@ -99,3 +99,22 @@ func LogRSSIEvent(p template.BasePacket) (*template.BasePacket, error) {
 
 	return utils.MakePacket(template.LogRSSIEvent, p.Data)
 }
+
+func RequestHealthcheck(lock *models.Lock) (*template.BasePacket, error) {
+	var data []byte = make([]byte, 8)
+
+	pubKey, err := hex.DecodeString(lock.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	binary.BigEndian.PutUint64(data, lock.ID)
+	data = append(data, pubKey...)
+
+	packet, err := utils.MakePacket(template.LogHealthcheckEvent, data)
+	if err != nil {
+		return nil, err
+	}
+
+	return utils.SendUDPPacket(packet, lock.IpAddress)
+}

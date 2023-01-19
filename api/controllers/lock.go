@@ -14,7 +14,7 @@ func RegisterLock(app *gin.Engine) {
 
 	router.GET("/", func(c *gin.Context) {
 		params := utils.ParseSearchParameter(c)
-		keyword := c.GetString("keyword")
+		keyword := c.Query("keyword")
 		status := c.GetBool("status")
 
 		data, pagination, err := services.GetLocks(*params, keyword, status)

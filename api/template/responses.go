@@ -1,10 +1,10 @@
 package template
 
 type Pagination struct {
-	Page  int `json:"page,omitempty"`
-	Limit int `json:"limit,omitempty"`
-	Last  int `json:"last,omitempty"`
-	Total int `json:"total,omitempty"`
+	Page  int `json:"page"`
+	Limit int `json:"limit"`
+	Last  int `json:"last"`
+	Total int `json:"total"`
 }
 
 type BaseResponse struct {
