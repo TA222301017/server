@@ -17,14 +17,17 @@ func GetKeys(p template.SearchParameter, keyword string, status bool) ([]models.
 	keyword = "%" + keyword + "%"
 
 	var cnt int64
-	if err := db.Find(&models.Key{}).Count(&cnt).Error; err != nil {
+	if err := db.
+		Where("label LIKE ? OR key_id LIKE ?", keyword, keyword).
+		Find(&models.Key{}).Count(&cnt).Error; err != nil {
 		return nil, nil, err
 	}
 
 	var keys []models.Key
-	if err := db.Find(&keys).
+	if err := db.
+		Offset(offset).Limit(limit).
 		Where("label LIKE ? OR key_id LIKE ?", keyword, keyword).
-		Offset(offset).Limit(limit).Error; err != nil {
+		Find(&keys).Error; err != nil {
 		return nil, nil, err
 	}
 

@@ -42,5 +42,36 @@ func Database() {
 	db.AutoMigrate(&models.Lock{})
 	db.AutoMigrate(&models.Key{})
 
+	roles := []models.Role{
+		{
+			BaseModel: models.BaseModel{
+				ID: 1,
+			},
+			Name: "Guest",
+		},
+		{
+			BaseModel: models.BaseModel{
+				ID: 2,
+			},
+			Name: "Doctor",
+		},
+		{
+			BaseModel: models.BaseModel{
+				ID: 3,
+			},
+			Name: "Nurse",
+		},
+		{
+			BaseModel: models.BaseModel{
+				ID: 4,
+			},
+			Name: "Staff",
+		},
+	}
+
+	for _, r := range roles {
+		db.Create(&r)
+	}
+
 	DB = db
 }

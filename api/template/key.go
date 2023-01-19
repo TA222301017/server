@@ -18,8 +18,8 @@ func (a AddKeyRequest) Validate() error {
 		return errors.New("key_id must not be empty")
 	}
 
-	if len(a.KeyID) != 256 {
-		return errors.New("key_id must have length of 256 characters")
+	if len(a.KeyID) != 32 {
+		return errors.New("key_id must have length of 32 characters")
 	}
 
 	return nil
@@ -33,8 +33,8 @@ type EditKeyRequest struct {
 }
 
 func (e EditKeyRequest) Validate() error {
-	if len(e.KeyID) != 256 {
-		return errors.New("key_id must have length of 256 characters")
+	if len(e.KeyID) != 32 {
+		return errors.New("key_id must have length of 32 characters")
 	}
 
 	return nil

@@ -3,14 +3,22 @@ package usecases
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"encoding/binary"
 	"encoding/hex"
+	"fmt"
+	"net"
+	"server/models"
+	gsetup "server/setup"
 	"server/udp/setup"
 	"server/udp/template"
 	"server/udp/utils"
 	"strings"
+	"time"
 )
 
-func KeyExchange(p template.BasePacket) (*template.BasePacket, error) {
+func KeyExchange(p template.BasePacket, addr *net.UDPAddr) (*template.BasePacket, error) {
+	db := gsetup.DB
+
 	lockID := strings.ToUpper(hex.EncodeToString(p.Data[:16]))
 	pLen := len(p.Data)
 
@@ -28,8 +36,66 @@ func KeyExchange(p template.BasePacket) (*template.BasePacket, error) {
 	serverPubKey := setup.PublicKey
 	serverPubKeyBytes := elliptic.Marshal(elliptic.P224(), serverPubKey.X, serverPubKey.Y)
 
+	lock := models.Lock{
+		LockID:    lockID,
+		IpAddress: addr.IP.String(),
+		Label:     fmt.Sprintf("Lock on %s", addr.IP.String()),
+		PublicKey: hex.EncodeToString(p.Data[16:pLen]),
+	}
+
+	if err := db.Create(&lock).Error; err != nil {
+		return nil, err
+	}
+
 	return utils.MakePacket(
 		template.KeyExchange,
 		append(p.Data[:16], serverPubKeyBytes...),
 	)
+}
+
+func LogAccessEvent(p template.BasePacket) (*template.BasePacket, error) {
+	db := gsetup.DB
+
+	lockID := binary.BigEndian.Uint64(p.Data[:8])
+	keyID := binary.BigEndian.Uint64(p.Data[8:16])
+
+	var personel models.Personel
+	if err := db.First(&personel, "key_id = ?", keyID).Error; err != nil {
+		return nil, err
+	}
+
+	accessLog := models.AccessLog{
+		LockID:           lockID,
+		KeyID:            keyID,
+		PersonelName:     personel.Name,
+		PersonelIDNumber: personel.IDNumber,
+		Timestamp:        time.Now(),
+	}
+
+	if err := db.Create(&accessLog).Error; err != nil {
+		return nil, err
+	}
+
+	return utils.MakePacket(template.LogAccessEvent, p.Data)
+}
+
+func LogRSSIEvent(p template.BasePacket) (*template.BasePacket, error) {
+	db := gsetup.DB
+
+	lockID := binary.BigEndian.Uint64(p.Data[:8])
+	keyID := binary.BigEndian.Uint64(p.Data[8:16])
+	rssi := int(p.Data[16])
+
+	rssiLog := models.RSSILog{
+		RSSI:      rssi,
+		LockID:    lockID,
+		KeyID:     keyID,
+		Timestamp: time.Now(),
+	}
+
+	if err := db.Create(&rssiLog).Error; err != nil {
+		return nil, err
+	}
+
+	return utils.MakePacket(template.LogRSSIEvent, p.Data)
 }

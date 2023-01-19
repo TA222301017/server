@@ -20,7 +20,7 @@ func handlePacket(conn *net.UDPConn, request <-chan *Request) {
 		switch r.Packet.OpCode {
 		case template.KeyExchange:
 			log.Printf("| 0x%x | KEY EXCHANGE\n", r.Packet.OpCode)
-			res, err := usecases.KeyExchange(*r.Packet)
+			res, err := usecases.KeyExchange(*r.Packet, r.RemoteAddr)
 			if err != nil {
 				log.Printf("| %s\n", err)
 			}

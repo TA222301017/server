@@ -17,14 +17,17 @@ func GetLocks(p template.SearchParameter, keyword string, status bool) ([]models
 	keyword = "%" + keyword + "%"
 
 	var cnt int64
-	if err := db.Find(&models.Lock{}).Count(&cnt).Error; err != nil {
+	if err := db.
+		Where("label LIKE ? OR location LIKE ?", keyword, keyword).
+		Find(&models.Lock{}).Count(&cnt).Error; err != nil {
 		return nil, nil, err
 	}
 
 	var locks []models.Lock
-	if err := db.Find(&locks).
+	if err := db.
+		Limit(limit).Offset(offset).
 		Where("label LIKE ? OR location LIKE ?", keyword, keyword).
-		Offset(offset).Limit(limit).Error; err != nil {
+		Find(&locks).Error; err != nil {
 		return nil, nil, err
 	}
 

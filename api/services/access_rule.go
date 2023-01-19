@@ -5,6 +5,7 @@ import (
 	"server/api/template"
 	"server/models"
 	"server/setup"
+	"server/udp/usecases"
 
 	"gorm.io/gorm"
 )
@@ -34,14 +35,6 @@ func GetPersonelAccessRules(personelID uint64) []template.AccessRuleData {
 func AddAccessRule(a template.AddAccessRule, userID uint64) (*template.AccessRuleData, error) {
 	db := setup.DB
 
-	accessRule := models.AccessRule{
-		PersonelID: a.PersonelID,
-		LockID:     a.LockID,
-		CreatorID:  userID,
-		StartsAt:   a.StartsAt,
-		EndsAt:     a.EndsAt,
-	}
-
 	var lock models.Lock
 	if err := db.First(&lock, a.LockID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, errors.New("lock not found")
@@ -49,6 +42,19 @@ func AddAccessRule(a template.AddAccessRule, userID uint64) (*template.AccessRul
 
 	if err := db.First(&models.Personel{}, a.PersonelID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, errors.New("personel not found")
+	}
+
+	accessRule := models.AccessRule{
+		PersonelID: a.PersonelID,
+		LockID:     a.LockID,
+		Lock:       lock,
+		CreatorID:  userID,
+		StartsAt:   a.StartsAt,
+		EndsAt:     a.EndsAt,
+	}
+
+	if _, err := usecases.AddAccessRule(accessRule); err != nil {
+		return nil, err
 	}
 
 	if err := db.Create(&accessRule).Error; err != nil {

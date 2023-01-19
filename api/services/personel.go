@@ -54,15 +54,17 @@ func GetPersonels(p template.SearchParameter, status bool, keyword string) ([]te
 	keyword = "%" + keyword + "%"
 
 	var cnt int64
-	if err := db.Find(&models.Personel{}).Count(&cnt).Error; err != nil {
+	if err := db.
+		Where("name LIKE ? OR id_number LIKE ?", keyword, keyword).
+		Find(&models.Personel{}).Count(&cnt).Error; err != nil {
 		return nil, nil, err
 	}
 
 	var personels []models.Personel
-	if err := db.Find(&personels).
+	if err := db.
+		Limit(limit).Offset(offset).
 		Where("name LIKE ? OR id_number LIKE ?", keyword, keyword).
-		Preload("Role").Offset(offset).
-		Limit(limit).Error; err != nil {
+		Find(&personels).Preload("Role").Error; err != nil {
 		return nil, nil, err
 	}
 
