@@ -9,21 +9,18 @@ import (
 
 var (
 	AllowedOrigins []string = []string{"*"}
-	AllowedHeaders []string = []string{"Authorization"}
+	AllowedHeaders []string = []string{"Origin", "Authorization", "Content-Length", "Content-Type"}
 	AllowedMethods []string = []string{"GET", "POST", "PUT", "PATCH", "OPTIONS", "DELETE"}
 )
 
 func Cors(app *gin.Engine) {
 	config := cors.Config{
-		AllowOrigins:     AllowedOrigins,
+		AllowAllOrigins:  true,
 		AllowMethods:     AllowedMethods,
 		AllowHeaders:     AllowedHeaders,
-		ExposeHeaders:    []string{"Content-Length", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length", "Authorization", "Content-Type", "Access-Control-Allow-Origin"},
 		AllowCredentials: false,
-		AllowOriginFunc: func(origin string) bool {
-			return true
-		},
-		MaxAge: 12 * time.Hour,
+		MaxAge:           12 * time.Hour,
 	}
 	app.Use(cors.New(config))
 }

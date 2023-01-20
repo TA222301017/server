@@ -5,6 +5,8 @@ import (
 	"server/api/template"
 	"server/models"
 	"server/setup"
+	"server/udp/usecases"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -135,4 +137,29 @@ func GetHealthcheckLog(p *template.SearchParameter, personelID uint64) ([]templa
 	}
 
 	return data, &pagination, nil
+}
+
+func CheckLocks() ([]models.HealthcheckLog, error) {
+	db := setup.DB
+
+	var locks []models.Lock
+	if err := db.Find(&locks).Error; err != nil {
+		return nil, err
+	}
+
+	var status []models.HealthcheckLog
+	for _, l := range locks {
+		_, err := usecases.RequestHealthcheck(&l)
+		status = append(status, models.HealthcheckLog{
+			LockID:    l.ID,
+			Timestamp: time.Now(),
+			Status:    err == nil,
+		})
+	}
+
+	if err := db.Create(&status).Error; err != nil {
+		return nil, err
+	}
+
+	return status, nil
 }

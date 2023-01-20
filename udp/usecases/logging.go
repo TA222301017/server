@@ -116,5 +116,10 @@ func RequestHealthcheck(lock *models.Lock) (*template.BasePacket, error) {
 		return nil, err
 	}
 
-	return utils.SendUDPPacket(packet, lock.IpAddress)
+	res, err := utils.SendUDPPacket(packet, lock.IpAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, utils.VerifyPacket(res.Bytes(), setup.PublicKey)
 }
