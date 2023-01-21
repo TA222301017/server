@@ -12,7 +12,7 @@ import (
 func RegisterKey(app *gin.Engine) {
 	router := app.Group("/device/key")
 
-	router.GET("/", func(c *gin.Context) {
+	router.GET("", func(c *gin.Context) {
 		params := utils.ParseSearchParameter(c)
 		keyword := c.Query("keyword")
 		status := c.GetBool("status")
@@ -43,7 +43,7 @@ func RegisterKey(app *gin.Engine) {
 		utils.MakeResponseSuccess(c, data, nil)
 	})
 
-	router.POST("/", func(c *gin.Context) {
+	router.POST("", func(c *gin.Context) {
 		var body template.AddKeyRequest
 		if err := c.Bind(&body); err != nil {
 			utils.ResponseServerError(c, err)

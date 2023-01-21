@@ -2,6 +2,15 @@ package template
 
 import "errors"
 
+type KeyData struct {
+	ID      uint64 `json:"id"`
+	KeyID   string `json:"key_id"`
+	Name    string `json:"name"`
+	Status  bool   `json:"status"`
+	Owner   string `json:"owner"`
+	OwnerID uint64 `json:"owner_id"`
+}
+
 type AddKeyRequest struct {
 	Name        string `json:"name"`
 	KeyID       string `json:"key_id"`

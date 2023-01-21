@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetKeys(p template.SearchParameter, keyword string, status bool) ([]models.Key, *template.Pagination, error) {
+func GetKeys(p template.SearchParameter, keyword string, status bool) ([]template.KeyData, *template.Pagination, error) {
 	db := setup.DB
 
 	offset := (p.Page - 1) * p.Limit
@@ -23,11 +23,27 @@ func GetKeys(p template.SearchParameter, keyword string, status bool) ([]models.
 		return nil, nil, err
 	}
 
-	var keys []models.Key
-	if err := db.
-		Offset(offset).Limit(limit).
-		Where("label LIKE ? OR key_id LIKE ?", keyword, keyword).
-		Find(&keys).Error; err != nil {
+	var keys []template.KeyData
+	if err := db.Raw(`
+		SELECT 
+			keys.*, 
+			keys.label AS name,
+			personels.name AS owner, 
+			personels.id AS owner_id 
+		FROM 
+			keys 
+		JOIN 
+			personels 
+		ON 
+			keys.id = personels.key_id
+		WHERE
+			keys.label LIKE ? OR
+			keys.key_id LIKE ?
+		ORDER BY 
+			keys.created_at DESC
+		OFFSET ? LIMIT ?
+	`, keyword, keyword, offset, limit).
+		Scan(&keys).Error; err != nil {
 		return nil, nil, err
 	}
 

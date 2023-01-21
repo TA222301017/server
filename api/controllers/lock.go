@@ -12,7 +12,7 @@ import (
 func RegisterLock(app *gin.Engine) {
 	router := app.Group("/device/lock")
 
-	router.GET("/", func(c *gin.Context) {
+	router.GET("", func(c *gin.Context) {
 		params := utils.ParseSearchParameter(c)
 		keyword := c.Query("keyword")
 		status := c.GetBool("status")
