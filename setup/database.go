@@ -33,6 +33,7 @@ func Database() {
 	}
 	log.Println("Connected to database")
 
+	db.AutoMigrate(&models.HealthcheckLog{})
 	db.AutoMigrate(&models.AccessRule{})
 	db.AutoMigrate(&models.AccessLog{})
 	db.AutoMigrate(&models.Personel{})

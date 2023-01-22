@@ -28,7 +28,15 @@ func RegisterLog(app *gin.Engine) {
 	})
 
 	router.GET("/healthcheck", func(c *gin.Context) {
-		utils.ResponseUnimplemented(c)
+		params := utils.ParseSearchParameter(c)
+
+		data, pagination, err := services.GetHealthcheckLog(params)
+		if err != nil {
+			utils.ResponseServerError(c, err)
+			return
+		}
+
+		utils.MakeResponseSuccess(c, data, pagination)
 	})
 
 	router.GET("/rssi", func(c *gin.Context) {

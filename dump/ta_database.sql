@@ -32,7 +32,8 @@ CREATE TABLE public.access_logs (
     personel_id_number text,
     lock_id bigint,
     key_id bigint,
-    "timestamp" timestamp with time zone
+    "timestamp" timestamp with time zone,
+    location text
 );
 
 
@@ -97,6 +98,43 @@ ALTER TABLE public.access_rules_id_seq OWNER TO root;
 --
 
 ALTER SEQUENCE public.access_rules_id_seq OWNED BY public.access_rules.id;
+
+
+--
+-- Name: healthcheck_logs; Type: TABLE; Schema: public; Owner: root
+--
+
+CREATE TABLE public.healthcheck_logs (
+    id bigint NOT NULL,
+    created_at timestamp with time zone,
+    updated_at timestamp with time zone,
+    lock_id bigint,
+    "timestamp" timestamp with time zone,
+    status boolean
+);
+
+
+ALTER TABLE public.healthcheck_logs OWNER TO root;
+
+--
+-- Name: healthcheck_logs_id_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE public.healthcheck_logs_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.healthcheck_logs_id_seq OWNER TO root;
+
+--
+-- Name: healthcheck_logs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: root
+--
+
+ALTER SEQUENCE public.healthcheck_logs_id_seq OWNED BY public.healthcheck_logs.id;
 
 
 --
@@ -362,6 +400,13 @@ ALTER TABLE ONLY public.access_rules ALTER COLUMN id SET DEFAULT nextval('public
 
 
 --
+-- Name: healthcheck_logs id; Type: DEFAULT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.healthcheck_logs ALTER COLUMN id SET DEFAULT nextval('public.healthcheck_logs_id_seq'::regclass);
+
+
+--
 -- Name: keys id; Type: DEFAULT; Schema: public; Owner: root
 --
 
@@ -407,7 +452,11 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 -- Data for Name: access_logs; Type: TABLE DATA; Schema: public; Owner: root
 --
 
-COPY public.access_logs (id, created_at, updated_at, personel_name, personel_id_number, lock_id, key_id, "timestamp") FROM stdin;
+COPY public.access_logs (id, created_at, updated_at, personel_name, personel_id_number, lock_id, key_id, "timestamp", location) FROM stdin;
+3	2023-01-21 19:20:38.754634+07	2023-01-21 19:20:38.754634+07	ferb	1	1	1	2023-01-21 19:20:38.754634+07	\N
+2	2023-01-21 19:20:38.754634+07	2023-01-21 19:20:38.754634+07	ferb	1	1	1	2023-01-21 19:20:38.754634+07	\N
+4	2023-01-21 19:20:38.754634+07	2023-01-21 19:20:38.754634+07	ferb	1	1	1	2023-01-21 19:20:38.754634+07	\N
+1	2023-01-21 19:20:38.754634+07	2023-01-21 19:20:38.754634+07	phineas	1	1	1	2023-01-21 19:20:38.754634+07	\N
 \.
 
 
@@ -420,11 +469,36 @@ COPY public.access_rules (id, created_at, updated_at, personel_id, lock_id, key_
 
 
 --
+-- Data for Name: healthcheck_logs; Type: TABLE DATA; Schema: public; Owner: root
+--
+
+COPY public.healthcheck_logs (id, created_at, updated_at, lock_id, "timestamp", status) FROM stdin;
+1	2023-01-22 00:36:25.180508+07	2023-01-22 00:36:25.180508+07	1	2023-01-22 00:36:25.0663+07	f
+2	2023-01-22 00:36:36.412577+07	2023-01-22 00:36:36.412577+07	1	2023-01-22 00:36:36.299969+07	f
+3	2023-01-22 00:37:06.711988+07	2023-01-22 00:37:06.711988+07	1	2023-01-22 00:37:06.522852+07	f
+4	2023-01-22 00:42:16.681306+07	2023-01-22 00:42:16.681306+07	1	2023-01-22 00:42:16.554606+07	f
+5	2023-01-22 00:46:54.897141+07	2023-01-22 00:46:54.897141+07	5	2023-01-22 00:46:54.785082+07	f
+6	2023-01-22 00:46:54.897141+07	2023-01-22 00:46:54.897141+07	1	2023-01-22 00:46:54.785082+07	f
+7	2023-01-22 00:46:54.897141+07	2023-01-22 00:46:54.897141+07	3	2023-01-22 00:46:54.785082+07	f
+8	2023-01-22 00:46:54.897141+07	2023-01-22 00:46:54.897141+07	2	2023-01-22 00:46:54.785082+07	f
+9	2023-01-22 00:46:54.897141+07	2023-01-22 00:46:54.897141+07	4	2023-01-22 00:46:54.785082+07	f
+10	2023-01-22 00:47:09.121627+07	2023-01-22 00:47:09.121627+07	5	2023-01-22 00:47:09.01054+07	f
+11	2023-01-22 00:47:09.121627+07	2023-01-22 00:47:09.121627+07	2	2023-01-22 00:47:09.01054+07	f
+12	2023-01-22 00:47:09.121627+07	2023-01-22 00:47:09.121627+07	1	2023-01-22 00:47:09.01054+07	f
+13	2023-01-22 00:47:09.121627+07	2023-01-22 00:47:09.121627+07	3	2023-01-22 00:47:09.012052+07	f
+14	2023-01-22 00:47:09.121627+07	2023-01-22 00:47:09.121627+07	4	2023-01-22 00:47:09.01739+07	f
+\.
+
+
+--
 -- Data for Name: keys; Type: TABLE DATA; Schema: public; Owner: root
 --
 
 COPY public.keys (id, created_at, updated_at, key_id, label, status, description) FROM stdin;
 1	2023-01-18 03:58:14.727942+07	2023-01-18 03:58:14.727942+07	DEADBEEFDEADBEEFDEADBEEFDEADBEEF	KEY-01	t	ini kunci KEY-01
+2	2023-01-21 19:20:12.025039+07	2023-01-21 19:20:12.025039+07	DEADBEEFDEADBEEFDEADBEEFBEEFDEAD	KEY-02	t	ini kunci KEY-02
+3	2023-01-21 19:20:26.157602+07	2023-01-21 19:20:26.157602+07	DEADBEEFDEADBEEFBEEFDEADDEADBEEF	KEY-03	t	ini kunci KEY-03
+4	2023-01-21 19:20:38.754634+07	2023-01-21 19:20:38.754634+07	BEEFDEADBEEFDEADBEEFDEADDEADBEEF	KEY-04	t	ini kunci KEY-04
 \.
 
 
@@ -434,6 +508,10 @@ COPY public.keys (id, created_at, updated_at, key_id, label, status, description
 
 COPY public.locks (id, created_at, updated_at, lock_id, ip_address, label, description, public_key, location) FROM stdin;
 1	2023-01-18 03:54:20.780807+07	2023-01-18 03:54:20.780807+07	DEADBEEFDEADBEEFDEADBEEFDEADBEEF	127.0.0.1	Lock on 127.0.0.1		04348766ba5b36436fd3e2528cf0a979bdc891f3bde663438377e99e70d6428d3ed26d387e1e35c5395a622402ed63f2ca2306f4eeae8a9c8d	
+2	2023-01-18 03:54:20.780807+07	2023-01-18 03:54:20.780807+07	DEADBEEFDEADBEEFDEADBEEFDEADBEE1	192.168.100.5	Lock on 192.168.100.5	\N	04348766ba5b36436fd3e2528cf0a979bdc891f3bde663438377e99e70d6428d3ed26d387e1e35c5395a622402ed63f2ca2306f4eeae8a9c8d	\N
+3	2023-01-18 03:54:20.780807+07	2023-01-18 03:54:20.780807+07	DEADBEEFDEADBEEFDEADBEEFDEADBEE2	192.168.100.6	Lock on 192.168.100.6	\N	04348766ba5b36436fd3e2528cf0a979bdc891f3bde663438377e99e70d6428d3ed26d387e1e35c5395a622402ed63f2ca2306f4eeae8a9c8d	\N
+4	2023-01-18 03:54:20.780807+07	2023-01-18 03:54:20.780807+07	DEADBEEFDEADBEEFDEADBEEFDEADBEE3	192.168.100.7	Lock on 192.168.100.7	\N	04348766ba5b36436fd3e2528cf0a979bdc891f3bde663438377e99e70d6428d3ed26d387e1e35c5395a622402ed63f2ca2306f4eeae8a9c8d	\N
+5	2023-01-18 03:54:20.780807+07	2023-01-18 03:54:20.780807+07	DEADBEEFDEADBEEFDEADBEEFDEADBEE4	192.168.100.8	Lock on 192.168.100.8	\N	04348766ba5b36436fd3e2528cf0a979bdc891f3bde663438377e99e70d6428d3ed26d387e1e35c5395a622402ed63f2ca2306f4eeae8a9c8d	\N
 \.
 
 
@@ -450,8 +528,8 @@ COPY public.my_table (id, name, value) FROM stdin;
 --
 
 COPY public.personels (id, created_at, updated_at, id_number, name, status, role_id, description, key_id) FROM stdin;
-2	2023-01-18 04:05:13.981845+07	2023-01-18 04:05:13.981845+07	11223344556677889900	ferb	t	1		1
-1	2023-01-18 04:04:38.666893+07	2023-01-18 04:06:30.639425+07	22113344556677889900	ferb	f	1	adeknya phineas hehe	1
+1	2023-01-18 04:04:38.666893+07	2023-01-18 04:06:30.639425+07	22113344556677889900	phineas	f	1	adeknya phineas hehe	1
+2	2023-01-18 04:05:13.981845+07	2023-01-18 04:05:13.981845+07	11223344556677889900	ferb	t	1		2
 \.
 
 
@@ -500,17 +578,24 @@ SELECT pg_catalog.setval('public.access_rules_id_seq', 1, false);
 
 
 --
+-- Name: healthcheck_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: root
+--
+
+SELECT pg_catalog.setval('public.healthcheck_logs_id_seq', 14, true);
+
+
+--
 -- Name: keys_id_seq; Type: SEQUENCE SET; Schema: public; Owner: root
 --
 
-SELECT pg_catalog.setval('public.keys_id_seq', 1, true);
+SELECT pg_catalog.setval('public.keys_id_seq', 4, true);
 
 
 --
 -- Name: locks_id_seq; Type: SEQUENCE SET; Schema: public; Owner: root
 --
 
-SELECT pg_catalog.setval('public.locks_id_seq', 1, true);
+SELECT pg_catalog.setval('public.locks_id_seq', 2, true);
 
 
 --
@@ -555,6 +640,14 @@ ALTER TABLE ONLY public.access_logs
 
 ALTER TABLE ONLY public.access_rules
     ADD CONSTRAINT access_rules_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: healthcheck_logs healthcheck_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: root
+--
+
+ALTER TABLE ONLY public.healthcheck_logs
+    ADD CONSTRAINT healthcheck_logs_pkey PRIMARY KEY (id);
 
 
 --

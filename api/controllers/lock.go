@@ -67,10 +67,29 @@ func RegisterLock(app *gin.Engine) {
 	})
 
 	router.GET("/check", func(c *gin.Context) {
-		utils.ResponseUnimplemented(c)
+		data, err := services.CheckLocks()
+		if err != nil {
+			utils.ResponseServerError(c, err)
+			return
+		}
+
+		utils.MakeResponseSuccess(c, data, nil)
 	})
 
 	router.GET("/check/:lock_id", func(c *gin.Context) {
-		utils.ResponseUnimplemented(c)
+		temp := c.Param("lock_id")
+		lockID, err := strconv.ParseUint(temp, 10, 64)
+		if err != nil {
+			utils.ResponseBadRequest(c, err)
+			return
+		}
+
+		data, err := services.CheckLock(lockID)
+		if err != nil {
+			utils.ResponseServerError(c, err)
+			return
+		}
+
+		utils.MakeResponseSuccess(c, data, nil)
 	})
 }

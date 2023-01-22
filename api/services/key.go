@@ -26,23 +26,26 @@ func GetKeys(p template.SearchParameter, keyword string, status bool) ([]templat
 	var keys []template.KeyData
 	if err := db.Raw(`
 		SELECT 
-			keys.*, 
+			keys.id AS id, 
+			keys.key_id AS key_id, 
+			keys.status AS status, 
 			keys.label AS name,
-			personels.name AS owner, 
+			personels.name AS owner,
 			personels.id AS owner_id 
 		FROM 
 			keys 
-		JOIN 
-			personels 
+		LEFT JOIN 
+			personels
 		ON 
 			keys.id = personels.key_id
 		WHERE
 			keys.label LIKE ? OR
-			keys.key_id LIKE ?
+			keys.key_id LIKE ? OR
+			personels.name LIKE ?
 		ORDER BY 
 			keys.created_at DESC
 		OFFSET ? LIMIT ?
-	`, keyword, keyword, offset, limit).
+	`, keyword, keyword, keyword, offset, limit).
 		Scan(&keys).Error; err != nil {
 		return nil, nil, err
 	}
