@@ -64,7 +64,7 @@ func GetPersonels(p template.SearchParameter, status bool, keyword string) ([]te
 	if err := db.
 		Limit(limit).Offset(offset).
 		Where("name LIKE ? OR id_number LIKE ?", keyword, keyword).
-		Find(&personels).Preload("Role").Error; err != nil {
+		Preload("Role").Find(&personels).Error; err != nil {
 		return nil, nil, err
 	}
 
@@ -85,6 +85,8 @@ func GetPersonels(p template.SearchParameter, status bool, keyword string) ([]te
 			Status:      p.Status,
 			Role:        p.Role.Name,
 			Description: p.Description,
+			RoleID:      p.RoleID,
+			KeyID:       p.KeyID,
 		})
 	}
 
@@ -106,6 +108,8 @@ func GetPersonel(personelID uint64) (*template.PersonelData, error) {
 		Status:      p.Status,
 		Role:        p.Role.Name,
 		Description: p.Description,
+		RoleID:      p.RoleID,
+		KeyID:       p.KeyID,
 	}
 
 	return &data, nil
@@ -161,7 +165,18 @@ func EditPersonel(e template.EditPersonelRequest, personelID uint64) (*template.
 		Status:      p.Status,
 		Role:        role.Name,
 		Description: p.Description,
+		RoleID:      p.RoleID,
+		KeyID:       p.KeyID,
 	}
 
 	return &data, nil
+}
+
+func GetRoles() []models.Role {
+	db := setup.DB
+
+	var roles []models.Role
+	db.Find(&roles)
+
+	return roles
 }

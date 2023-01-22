@@ -12,6 +12,12 @@ import (
 func ResgisterPersonel(app *gin.Engine) {
 	router := app.Group("/personel")
 
+	router.GET("/role", func(c *gin.Context) {
+		data := services.GetRoles()
+
+		utils.MakeResponseSuccess(c, data, nil)
+	})
+
 	router.GET("", func(c *gin.Context) {
 		params := utils.ParseSearchParameter(c)
 		keyword := c.Query("keyword")

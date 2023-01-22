@@ -5,8 +5,10 @@ type PersonelData struct {
 	Name        string `json:"name"`
 	PersonelID  string `json:"personel_id"`
 	Status      bool   `json:"status"`
+	RoleID      uint64 `json:"role_id"`
 	Role        string `json:"role"`
 	Description string `json:"description"`
+	KeyID       uint64 `json:"key_id"`
 }
 
 type AddPersonelRequest struct {

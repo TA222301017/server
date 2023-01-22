@@ -48,7 +48,7 @@ func RegisterAuth(app *gin.Engine) {
 
 		temp := strings.Split(authHeader, " ")
 		if len(temp) != 2 {
-			utils.ResponseBadRequest(c, errors.New("authorization header must use the format Bearer TOKEN"))
+			utils.ResponseUnauthorized(c, errors.New("authorization header must use the format Bearer TOKEN"))
 			return
 		}
 

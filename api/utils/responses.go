@@ -66,7 +66,7 @@ func MakeResponseError(c *gin.Context, status int, msg string, err string) {
 		token = ""
 	}
 
-	c.JSON(http.StatusOK, template.BaseResponse{
+	c.JSON(status, template.BaseResponse{
 		Data:       nil,
 		Pagination: nil,
 		Msg:        msg,

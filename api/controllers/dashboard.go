@@ -10,7 +10,7 @@ import (
 func RegisterDashboard(app *gin.Engine) {
 	router := app.Group("dashboard")
 
-	router.GET("/", func(c *gin.Context) {
+	router.GET("", func(c *gin.Context) {
 		keyCnt, lockCnt, personelCnt := services.DashboardData()
 		utils.MakeResponseSuccess(c, gin.H{
 			"key_cnt":      keyCnt,
