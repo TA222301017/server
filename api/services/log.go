@@ -181,6 +181,10 @@ func CheckLocks() ([]models.HealthcheckLog, error) {
 				Timestamp: time.Now(),
 				Status:    err == nil,
 			})
+
+			l.Status = err == nil
+			db.Save(&l)
+
 			wg.Done()
 		}(l)
 	}

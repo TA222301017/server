@@ -7,5 +7,6 @@ type Lock struct {
 	Label       string `json:"name"`
 	Location    string `json:"location"`
 	Description string `json:"description"`
+	Status      bool   `json:"status"`
 	PublicKey   string `json:"public_key,omitempty"`
 }

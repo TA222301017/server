@@ -27,7 +27,7 @@ func RegisterKey(app *gin.Engine) {
 	})
 
 	router.GET("/:key_id", func(c *gin.Context) {
-		temp := c.Query("key_id")
+		temp := c.Param("key_id")
 		keyID, err := strconv.ParseUint(temp, 10, 64)
 		if err != nil {
 			utils.ResponseBadRequest(c, err)
@@ -65,7 +65,7 @@ func RegisterKey(app *gin.Engine) {
 	})
 
 	router.PATCH("/:key_id", func(c *gin.Context) {
-		temp := c.Query("key_id")
+		temp := c.Param("key_id")
 		keyID, err := strconv.ParseUint(temp, 10, 64)
 		if err != nil {
 			utils.ResponseBadRequest(c, err)
