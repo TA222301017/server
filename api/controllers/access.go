@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 	"server/api/services"
 	"server/api/template"
 	"server/api/utils"
@@ -13,6 +14,20 @@ import (
 func RegisterAccess(app *gin.Engine) {
 	router := app.Group("/access")
 
+	router.GET("", func(c *gin.Context) {
+		params := utils.ParseSearchParameter(c)
+		keyword := c.Query("keyword")
+		fmt.Println(keyword)
+
+		data, pagination, err := services.GetAccessRules(*params, keyword)
+		if err != nil {
+			utils.ResponseServerError(c, err)
+			return
+		}
+
+		utils.MakeResponseSuccess(c, data, pagination)
+	})
+
 	router.GET("/:personel_id", func(c *gin.Context) {
 		temp := c.Param("personel_id")
 		personelID, err := strconv.ParseUint(temp, 10, 64)
@@ -21,11 +36,13 @@ func RegisterAccess(app *gin.Engine) {
 			return
 		}
 
-		data := services.GetPersonelAccessRules(personelID)
-		utils.MakeResponseSuccess(c, data, nil)
+		params := utils.ParseSearchParameter(c)
+
+		data, pagination := services.GetPersonelAccessRules(*params, personelID)
+		utils.MakeResponseSuccess(c, data, pagination)
 	})
 
-	router.POST("/", func(c *gin.Context) {
+	router.POST("", func(c *gin.Context) {
 		var body template.AddAccessRule
 		if err := c.Bind(&body); err != nil {
 			utils.ResponseServerError(c, err)

@@ -32,18 +32,14 @@ func GetKeys(p template.SearchParameter, keyword string, status bool) ([]templat
 			keys.label AS name,
 			personels.name AS owner,
 			personels.id AS owner_id 
-		FROM 
-			keys 
-		LEFT JOIN 
-			personels
-		ON 
-			keys.id = personels.key_id
+		FROM keys 
+		LEFT JOIN personels
+		ON keys.id = personels.key_id
 		WHERE
 			keys.label LIKE ? OR
 			keys.key_id LIKE ? OR
 			personels.name LIKE ?
-		ORDER BY 
-			keys.created_at DESC
+		ORDER BY keys.created_at DESC
 		OFFSET ? LIMIT ?
 	`, keyword, keyword, keyword, offset, limit).
 		Scan(&keys).Error; err != nil {

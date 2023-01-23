@@ -39,8 +39,14 @@ type EditAccessRule struct {
 }
 
 type AccessRuleData struct {
-	ID       uint64    `json:"id"`
-	StartsAt time.Time `json:"starts_at"`
-	EndsAt   time.Time `json:"ends_at"`
-	Lock     string    `json:"lock"`
+	ID         uint64    `json:"id"`
+	StartsAt   time.Time `json:"starts_at"`
+	EndsAt     time.Time `json:"ends_at"`
+	LockID     uint64    `json:"lock_id,omitempty"`
+	Lock       string    `json:"lock"`
+	Location   string    `json:"location"`
+	PersonelID uint64    `json:"personel_id,omitempty"`
+	Personel   string    `json:"personel,omitempty"`
+	KeyID      uint64    `json:"key_id,omitempty"`
+	Key        string    `json:"key,omitempty"`
 }

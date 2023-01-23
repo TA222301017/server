@@ -5,31 +5,121 @@ import (
 	"server/api/template"
 	"server/models"
 	"server/setup"
-	"server/udp/usecases"
 
 	"gorm.io/gorm"
 )
 
-func GetPersonelAccessRules(personelID uint64) []template.AccessRuleData {
+func GetAccessRules(p template.SearchParameter, keyword string) ([]template.AccessRuleData, *template.Pagination, error) {
 	db := setup.DB
 
+	keyword = "%" + keyword + "%"
+	offset := (p.Page - 1) * p.Limit
+	limit := p.Limit
+
+	var cnt int64
+	if err := db.Raw(`
+	SELECT
+		COUNT(*) AS cnt
+	FROM access_rules
+	LEFT JOIN personels ON personels.id = access_rules.personel_id
+	LEFT JOIN locks ON locks.id = access_rules.lock_id
+	LEFT JOIN keys ON keys.id = access_rules.key_id
+	WHERE
+		access_rules.starts_at >= ? AND
+		access_rules.ends_at <= ? AND (
+			personels.name LIKE ? OR
+			locks.location LIKE ? OR
+			locks.label LIKE ? OR
+			keys.label LIKE ?
+		)
+	`, p.StartDate, p.EndDate, keyword,
+		keyword, keyword, keyword).
+		Scan(&cnt).Error; err != nil {
+		return nil, nil, err
+	}
+
+	var rules []template.AccessRuleData = make([]template.AccessRuleData, 0)
+	if err := db.Raw(`
+	SELECT
+		access_rules.id,
+		access_rules.personel_id,
+		access_rules.lock_id,
+		access_rules.key_id,
+		access_rules.starts_at,
+		access_rules.ends_at,
+		personels.name AS personel,
+		locks.label AS lock,
+		locks.location AS location,
+		keys.label AS key
+	FROM access_rules
+	LEFT JOIN personels ON personels.id = access_rules.personel_id
+	LEFT JOIN locks ON locks.id = access_rules.lock_id
+	LEFT JOIN keys ON keys.id = access_rules.key_id
+	WHERE
+		access_rules.starts_at >= ? AND
+		access_rules.ends_at <= ? AND (
+			personels.name LIKE ? OR
+			locks.label LIKE ? OR
+			locks.location LIKE ? OR
+			keys.label LIKE ?
+		)
+	ORDER BY access_rules.created_at DESC
+	OFFSET ? LIMIT ?
+	`, p.StartDate, p.EndDate, keyword, keyword,
+		keyword, keyword, offset, limit).
+		Scan(&rules).Error; err != nil {
+		return nil, nil, err
+	}
+
+	last := cnt / int64(limit)
+	pagination := template.Pagination{
+		Page:  p.Page,
+		Limit: p.Limit,
+		Last:  int(last),
+		Total: int(cnt),
+	}
+
+	return rules, &pagination, nil
+}
+
+func GetPersonelAccessRules(p template.SearchParameter, personelID uint64) ([]template.AccessRuleData, *template.Pagination) {
+	db := setup.DB
+
+	offset := (p.Page - 1) * p.Limit
+	limit := p.Limit
+
+	var cnt int64
+	db.Where("personel_id = ?", personelID).Find(&models.AccessRule{}).Count(&cnt)
+
 	var accessRules []models.AccessRule
-	db.Select("id", "starts_at", "ends_at").
-		Find(&accessRules).
+	db.Offset(offset).Limit(limit).
 		Where("personel_id = ?", personelID).
-		Preload("Lock")
+		Preload("Lock").Preload("Personel").Find(&accessRules)
 
 	var accessRuleData []template.AccessRuleData
 	for _, a := range accessRules {
 		accessRuleData = append(accessRuleData, template.AccessRuleData{
-			ID:       a.ID,
-			StartsAt: a.StartsAt,
-			EndsAt:   a.EndsAt,
-			Lock:     a.Lock.Label,
+			ID:         a.ID,
+			StartsAt:   a.StartsAt,
+			EndsAt:     a.EndsAt,
+			Lock:       a.Lock.Label,
+			Location:   a.Lock.Location,
+			LockID:     a.LockID,
+			PersonelID: a.PersonelID,
+			Personel:   a.Personel.Name,
+			KeyID:      a.KeyID,
 		})
 	}
 
-	return accessRuleData
+	last := cnt / int64(limit)
+	pagination := template.Pagination{
+		Page:  p.Page,
+		Limit: p.Limit,
+		Last:  int(last),
+		Total: int(cnt),
+	}
+
+	return accessRuleData, &pagination
 }
 
 func AddAccessRule(a template.AddAccessRule, userID uint64) (*template.AccessRuleData, error) {
@@ -40,7 +130,8 @@ func AddAccessRule(a template.AddAccessRule, userID uint64) (*template.AccessRul
 		return nil, errors.New("lock not found")
 	}
 
-	if err := db.First(&models.Personel{}, a.PersonelID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+	var personel models.Personel
+	if err := db.First(&personel, a.PersonelID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, errors.New("personel not found")
 	}
 
@@ -53,19 +144,25 @@ func AddAccessRule(a template.AddAccessRule, userID uint64) (*template.AccessRul
 		EndsAt:     a.EndsAt,
 	}
 
-	if _, err := usecases.AddAccessRule(accessRule); err != nil {
-		return nil, err
-	}
+	// TODO: uncomment kalo udh ada lock simulator
+	// if _, err := usecases.AddAccessRule(accessRule); err != nil {
+	// 	return nil, err
+	// }
 
 	if err := db.Create(&accessRule).Error; err != nil {
 		return nil, err
 	}
 
 	return &template.AccessRuleData{
-		ID:       accessRule.ID,
-		StartsAt: accessRule.StartsAt,
-		EndsAt:   accessRule.EndsAt,
-		Lock:     lock.Label,
+		ID:         accessRule.ID,
+		StartsAt:   accessRule.StartsAt,
+		EndsAt:     accessRule.EndsAt,
+		Lock:       lock.Label,
+		LockID:     accessRule.LockID,
+		Location:   lock.Location,
+		PersonelID: accessRule.PersonelID,
+		Personel:   personel.Name,
+		KeyID:      accessRule.KeyID,
 	}, nil
 }
 
@@ -73,7 +170,7 @@ func EditAccessRule(e template.EditAccessRule, userID uint64, accessRuleID uint6
 	db := setup.DB
 
 	var accessRule models.AccessRule
-	if err := db.First(&accessRule, accessRuleID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+	if err := db.Preload("Personel").First(&accessRule, accessRuleID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, errors.New("access rule not found")
 	}
 
@@ -99,19 +196,25 @@ func EditAccessRule(e template.EditAccessRule, userID uint64, accessRuleID uint6
 
 	accessRule.CreatorID = userID
 
-	if _, err := usecases.EditAccessRule(accessRule); err != nil {
-		return nil, err
-	}
+	// TODO: uncomment kalo udh ada lock simulator
+	// if _, err := usecases.EditAccessRule(accessRule); err != nil {
+	// 	return nil, err
+	// }
 
 	if err := db.Save(&accessRule).Error; err != nil {
 		return nil, err
 	}
 
 	return &template.AccessRuleData{
-		ID:       accessRuleID,
-		StartsAt: accessRule.StartsAt,
-		EndsAt:   accessRule.EndsAt,
-		Lock:     lock.Label,
+		ID:         accessRuleID,
+		StartsAt:   accessRule.StartsAt,
+		EndsAt:     accessRule.EndsAt,
+		Lock:       lock.Label,
+		Personel:   accessRule.Personel.Name,
+		LockID:     accessRule.LockID,
+		Location:   lock.Location,
+		KeyID:      accessRule.KeyID,
+		PersonelID: accessRule.PersonelID,
 	}, nil
 }
 
@@ -123,9 +226,10 @@ func DeleteAccessRule(accessRuleID uint64) error {
 		return err
 	}
 
-	if _, err := usecases.DeleteAccessRule(accessRuleID, accessRule.Lock.IpAddress); err != nil {
-		return err
-	}
+	// TODO: uncomment kalo udh ada lock simulator
+	// if _, err := usecases.DeleteAccessRule(accessRuleID, accessRule.Lock.IpAddress); err != nil {
+	// 	return err
+	// }
 
 	return db.Delete(&models.AccessRule{}, accessRuleID).Error
 }

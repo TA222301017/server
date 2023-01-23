@@ -41,7 +41,7 @@ func Auth() gin.HandlerFunc {
 		}
 
 		if err != nil {
-			utils.MakeResponseError(c, http.StatusInternalServerError, "internal server error", err.Error())
+			utils.MakeResponseError(c, http.StatusUnauthorized, "unauthorized", err.Error())
 			c.Abort()
 			return
 		}
