@@ -3,9 +3,15 @@ package template
 import "time"
 
 type RSSILogData struct {
-	Timestamp    time.Time `json:"timestamp"`
-	LockName     string    `json:"lock_name"`
-	LockLocation string    `json:"lock_location"`
+	Timestamp  time.Time `json:"timestamp"`
+	PersonelID uint64    `json:"personel_id"`
+	Personel   string    `json:"personel"`
+	LockID     uint64    `json:"lock_id"`
+	Lock       string    `json:"lock"`
+	KeyID      uint64    `json:"key_id"`
+	Key        string    `json:"key"`
+	Location   string    `json:"location"`
+	RSSI       int       `json:"rssi"`
 }
 
 type HealthcheckLogData struct {

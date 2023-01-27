@@ -86,11 +86,16 @@ func LogRSSIEvent(p template.BasePacket) (*template.BasePacket, error) {
 	keyID := binary.BigEndian.Uint64(p.Data[8:16])
 	rssi := int(p.Data[16])
 
+	var personel models.Personel
+	db.First(&personel, "key_id = ?", keyID)
+
 	rssiLog := models.RSSILog{
-		RSSI:      rssi,
-		LockID:    lockID,
-		KeyID:     keyID,
-		Timestamp: time.Now(),
+		RSSI:       rssi,
+		PersonelID: personel.ID,
+		Personel:   personel,
+		LockID:     lockID,
+		KeyID:      keyID,
+		Timestamp:  time.Now(),
 	}
 
 	if err := db.Create(&rssiLog).Error; err != nil {

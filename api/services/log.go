@@ -1,15 +1,12 @@
 package services
 
 import (
-	"errors"
 	"server/api/template"
 	"server/models"
 	"server/setup"
 	"server/udp/usecases"
 	"sync"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 func GetAccessLog(p template.SearchParameter, location string, personel string) ([]template.AccessLogData, *template.Pagination, error) {
@@ -72,39 +69,55 @@ func GetAccessLog(p template.SearchParameter, location string, personel string) 
 	return data, &pagination, nil
 }
 
-func GetRSSILog(p *template.SearchParameter, personelID uint64) ([]template.RSSILogData, *template.Pagination, error) {
+func GetRSSILog(p *template.SearchParameter, keyword string) ([]template.RSSILogData, *template.Pagination, error) {
 	db := setup.DB
 
+	keyword = "%" + keyword + "%"
 	offset := (p.Page - 1) * p.Limit
 	limit := p.Limit
 
-	var personel models.Personel
-	if err := db.First(&personel, personelID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil, err
-	}
-
 	var cnt int64
-	if err := db.
-		Where("key_id = ? AND timestamp BETWEEN ? AND ?", personel.KeyID, p.StartDate, p.EndDate).
-		Find(&models.RSSILog{}).Count(&cnt).Error; err != nil {
-		return nil, nil, err
-	}
-
-	var logs []models.RSSILog
-	if err := db.
-		Limit(limit).Offset(offset).
-		Where("key_id = ? AND timestamp BETWEEN ? AND ?", personel.KeyID, p.StartDate, p.EndDate).
-		Preload("Lock").Find(&logs).Error; err != nil {
+	if err := db.Raw(`
+	SELECT cnt FROM (
+		SELECT
+			COUNT(*) AS cnt
+		FROM rssi_logs
+			LEFT JOIN personels ON rssi_logs.personel_id = personels.id
+			LEFT JOIN locks ON rssi_logs.lock_id = locks.id
+			LEFT JOIN keys ON rssi_logs.key_id = keys.id
+		WHERE
+			rssi_logs.timestamp BETWEEN ? AND ? OR
+			personels.name LIKE ? OR 
+			locks.label LIKE ? OR 
+			keys.label LIKE ?
+	) AS t
+	`, p.StartDate, p.EndDate, keyword, keyword, keyword).
+		Scan(&cnt).Error; err != nil {
 		return nil, nil, err
 	}
 
 	var data []template.RSSILogData
-	for _, l := range logs {
-		data = append(data, template.RSSILogData{
-			Timestamp:    l.Timestamp,
-			LockName:     l.Lock.Label,
-			LockLocation: l.Lock.Location,
-		})
+	if err := db.Raw(`
+	SELECT
+		rssi_logs.*,
+		personels.name AS personel, 
+		locks.label AS lock, 
+		locks.location AS location, 
+		keys.label AS key
+	FROM rssi_logs
+		LEFT JOIN personels ON rssi_logs.personel_id = personels.id
+		LEFT JOIN locks ON rssi_logs.lock_id = locks.id
+		LEFT JOIN keys ON rssi_logs.key_id = keys.id
+	WHERE
+		rssi_logs.timestamp BETWEEN ? AND ? OR
+		personels.name LIKE ? OR 
+		locks.label LIKE ? OR 
+		keys.label LIKE ?
+	ORDER BY rssi_logs.created_at DESC
+	OFFSET ? LIMIT ?
+	`, p.StartDate, p.EndDate, keyword, keyword, keyword, offset, limit).
+		Scan(&data).Error; err != nil {
+		return nil, nil, err
 	}
 
 	last := cnt / int64(limit)

@@ -1,11 +1,8 @@
 package controllers
 
 import (
-	"errors"
-	"fmt"
 	"server/api/services"
 	"server/api/utils"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -40,17 +37,10 @@ func RegisterLog(app *gin.Engine) {
 	})
 
 	router.GET("/rssi", func(c *gin.Context) {
-		temp := c.Query("personel_id")
-		personelID, err := strconv.ParseUint(temp, 10, 64)
-		fmt.Println(temp, personelID)
-		if err != nil {
-			utils.ResponseBadRequest(c, errors.New("invalid personel_id"))
-			return
-		}
-
+		keyword := c.Query("keyword")
 		params := utils.ParseSearchParameter(c)
 
-		data, pagination, err := services.GetRSSILog(params, personelID)
+		data, pagination, err := services.GetRSSILog(params, keyword)
 		if err != nil {
 			utils.ResponseServerError(c, err)
 			return
