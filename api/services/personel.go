@@ -46,25 +46,27 @@ func RegisterPersonel(a template.AddPersonelRequest) (*template.PersonelData, er
 	return &personelData, nil
 }
 
-func GetPersonels(p template.SearchParameter, status bool, keyword string) ([]template.PersonelData, *template.Pagination, error) {
+func GetPersonels(p template.SearchParameter, keyword string, status string) ([]template.PersonelData, *template.Pagination, error) {
 	db := setup.DB
 
 	offset := (p.Page - 1) * p.Limit
 	limit := p.Limit
 	keyword = "%" + keyword + "%"
 
+	var query *gorm.DB
+	if status == "any" {
+		query = db.Where("name LIKE ? OR id_number LIKE ?", keyword, keyword)
+	} else {
+		query = db.Where("(name LIKE ? OR id_number LIKE ?) AND status = ?", keyword, keyword, status == "active")
+	}
+
 	var cnt int64
-	if err := db.
-		Where("name LIKE ? OR id_number LIKE ?", keyword, keyword).
-		Find(&models.Personel{}).Count(&cnt).Error; err != nil {
+	if err := query.Find(&models.Personel{}).Count(&cnt).Error; err != nil {
 		return nil, nil, err
 	}
 
 	var personels []models.Personel
-	if err := db.
-		Limit(limit).Offset(offset).
-		Where("name LIKE ? OR id_number LIKE ?", keyword, keyword).
-		Preload("Role").Find(&personels).Error; err != nil {
+	if err := query.Limit(limit).Offset(offset).Preload("Role").Find(&personels).Error; err != nil {
 		return nil, nil, err
 	}
 

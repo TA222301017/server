@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"server/api/template"
 	"server/models"
 	"server/setup"
@@ -131,37 +132,77 @@ func GetRSSILog(p *template.SearchParameter, keyword string) ([]template.RSSILog
 	return data, &pagination, nil
 }
 
-func GetHealthcheckLog(p *template.SearchParameter) ([]template.HealthcheckLogData, *template.Pagination, error) {
+func GetHealthcheckLog(p *template.SearchParameter, location string, status string) ([]template.HealthcheckLogData, *template.Pagination, error) {
 	db := setup.DB
 
+	location = "%" + location + "%"
 	offset := (p.Page - 1) * p.Limit
 	limit := p.Limit
 
+	var queryString string
 	var cnt int64
-	if err := db.
-		Where("timestamp BETWEEN ? AND ?", p.StartDate, p.EndDate).
-		Find(&models.HealthcheckLog{}).Count(&cnt).Error; err != nil {
-		return nil, nil, err
-	}
-
-	var logs []models.HealthcheckLog
-	if err := db.
-		Limit(limit).Offset(offset).Order("timestamp DESC").
-		Where("timestamp BETWEEN ? AND ?", p.StartDate, p.EndDate).
-		Preload("Lock").Find(&logs).Error; err != nil {
-		return nil, nil, err
-	}
-
 	var data []template.HealthcheckLogData
-	for _, l := range logs {
-		data = append(data, template.HealthcheckLogData{
-			ID:        l.ID,
-			Device:    l.Lock.Label,
-			DeviceID:  l.LockID,
-			Location:  l.Lock.Location,
-			Status:    l.Status,
-			Timestamp: l.Timestamp,
-		})
+
+	if status == "any" {
+		queryString = `
+		SELECT
+			healthcheck_logs.id AS id,
+			healthcheck_logs.status AS status,
+			healthcheck_logs.lock_id AS device_id,
+			healthcheck_logs.timestamp AS timestamp,
+			locks.location AS location,
+			locks.label AS device
+		FROM healthcheck_logs
+		LEFT JOIN locks
+		ON healthcheck_logs.lock_id = locks.id
+		WHERE
+			(healthcheck_logs.timestamp BETWEEN ? AND ?) AND
+			(locks.location LIKE ? OR locks.label LIKE ?)`
+
+		if err := db.Raw(
+			fmt.Sprintf("SELECT COUNT(*) AS cnt FROM ( %s ) AS t", queryString),
+			p.StartDate, p.EndDate, location, location).
+			Scan(&cnt).Error; err != nil {
+			return nil, nil, err
+		}
+
+		if err := db.Raw(
+			fmt.Sprintf("%s ORDER BY healthcheck_logs.timestamp DESC OFFSET ? LIMIT ?", queryString),
+			p.StartDate, p.EndDate, location, location, offset, limit).
+			Scan(&data).Error; err != nil {
+			return nil, nil, err
+		}
+	} else {
+		queryString = `
+		SELECT
+			healthcheck_logs.id AS id,
+			healthcheck_logs.status AS status,
+			healthcheck_logs.lock_id AS device_id,
+			healthcheck_logs.timestamp AS timestamp,
+			locks.location AS location,
+			locks.label AS device
+		FROM healthcheck_logs
+		LEFT JOIN locks
+		ON healthcheck_logs.lock_id = locks.id
+		WHERE
+			(healthcheck_logs.timestamp BETWEEN ? AND ?) AND
+			healthcheck_logs.status = ? AND
+			(locks.location LIKE ? OR locks.label LIKE ?)`
+
+		if err := db.Raw(
+			fmt.Sprintf("SELECT COUNT(*) AS cnt FROM ( %s ) AS t", queryString),
+			p.StartDate, p.EndDate, status == "active", location, location).
+			Scan(&cnt).Error; err != nil {
+			return nil, nil, err
+		}
+
+		if err := db.Raw(
+			fmt.Sprintf("%s ORDER BY healthcheck_logs.timestamp DESC OFFSET ? LIMIT ?", queryString),
+			p.StartDate, p.EndDate, status == "active", location, location, offset, limit).
+			Scan(&data).Error; err != nil {
+			return nil, nil, err
+		}
+
 	}
 
 	last := cnt / int64(limit)

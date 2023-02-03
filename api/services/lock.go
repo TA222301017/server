@@ -9,24 +9,27 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetLocks(p template.SearchParameter, keyword string, status bool) ([]models.Lock, *template.Pagination, error) {
+func GetLocks(p template.SearchParameter, keyword string, status string) ([]models.Lock, *template.Pagination, error) {
 	db := setup.DB
 
 	offset := (p.Page - 1) * p.Limit
 	limit := p.Limit
 	keyword = "%" + keyword + "%"
 
+	var query *gorm.DB
+	if status == "any" {
+		query = db.Where("label LIKE ? OR location LIKE ?", keyword, keyword)
+	} else {
+		query = db.Where("(label LIKE ? OR location LIKE ?) AND status = ?", keyword, keyword, status == "active")
+	}
+
 	var cnt int64
-	if err := db.
-		Where("label LIKE ? OR location LIKE ?", keyword, keyword).
-		Find(&models.Lock{}).Count(&cnt).Error; err != nil {
+	if err := query.Find(&models.Lock{}).Count(&cnt).Error; err != nil {
 		return nil, nil, err
 	}
 
 	var locks []models.Lock
-	if err := db.
-		Limit(limit).Offset(offset).
-		Where("label LIKE ? OR location LIKE ?", keyword, keyword).
+	if err := query.Limit(limit).Offset(offset).
 		Find(&locks).Error; err != nil {
 		return nil, nil, err
 	}

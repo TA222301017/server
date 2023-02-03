@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"server/api/template"
 	"server/models"
 	"server/setup"
@@ -9,22 +10,18 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetKeys(p template.SearchParameter, keyword string, status bool) ([]template.KeyData, *template.Pagination, error) {
+func GetKeys(p template.SearchParameter, keyword string, status string) ([]template.KeyData, *template.Pagination, error) {
 	db := setup.DB
 
 	offset := (p.Page - 1) * p.Limit
 	limit := p.Limit
 	keyword = "%" + keyword + "%"
 
-	var cnt int64
-	if err := db.
-		Where("label LIKE ? OR key_id LIKE ?", keyword, keyword).
-		Find(&models.Key{}).Count(&cnt).Error; err != nil {
-		return nil, nil, err
-	}
-
+	var queryString string
 	var keys []template.KeyData
-	if err := db.Raw(`
+	var cnt int64
+	if status == "any" {
+		queryString = `
 		SELECT 
 			keys.id AS id, 
 			keys.key_id AS key_id, 
@@ -38,12 +35,54 @@ func GetKeys(p template.SearchParameter, keyword string, status bool) ([]templat
 		WHERE
 			keys.label LIKE ? OR
 			keys.key_id LIKE ? OR
-			personels.name LIKE ?
-		ORDER BY keys.created_at DESC
-		OFFSET ? LIMIT ?
-	`, keyword, keyword, keyword, offset, limit).
-		Scan(&keys).Error; err != nil {
-		return nil, nil, err
+			personels.name LIKE ?`
+
+		if err := db.Raw(
+			fmt.Sprintf("SELECT COUNT(*) AS cnt FROM ( %s ) AS t", queryString),
+			keyword, keyword, keyword).
+			Scan(&cnt).Error; err != nil {
+			return nil, nil, err
+		}
+
+		if err := db.Raw(
+			fmt.Sprintf("%s ORDER BY keys.created_at DESC OFFSET ? LIMIT ?", queryString),
+			keyword, keyword, keyword, offset, limit).
+			Scan(&keys).Error; err != nil {
+			return nil, nil, err
+		}
+	} else {
+		queryString = `
+		SELECT 
+			keys.id AS id, 
+			keys.key_id AS key_id, 
+			keys.status AS status, 
+			keys.label AS name,
+			personels.name AS owner,
+			personels.id AS owner_id 
+		FROM keys 
+		LEFT JOIN personels
+		ON keys.id = personels.key_id
+		WHERE
+			keys.status = ? AND
+			(
+				keys.label LIKE ? OR
+				keys.key_id LIKE ? OR
+				personels.name LIKE ?
+			)`
+
+		if err := db.Raw(
+			fmt.Sprintf("SELECT COUNT(*) AS cnt FROM ( %s ) AS t", queryString),
+			status == "active", keyword, keyword, keyword).
+			Scan(&cnt).Error; err != nil {
+			return nil, nil, err
+		}
+
+		if err := db.Raw(
+			fmt.Sprintf("%s ORDER BY keys.created_at DESC OFFSET ? LIMIT ?", queryString),
+			status == "active", keyword, keyword, keyword, offset, limit).
+			Scan(&keys).Error; err != nil {
+			return nil, nil, err
+		}
 	}
 
 	last := cnt / int64(limit)
@@ -104,6 +143,8 @@ func EditKey(e template.EditKeyRequest, keyID uint64) (*models.Key, error) {
 	if e.Name != "" {
 		key.Label = e.Name
 	}
+
+	key.Status = e.Status
 
 	if err := db.Save(&key).Error; err != nil {
 		return nil, err

@@ -15,7 +15,7 @@ func RegisterKey(app *gin.Engine) {
 	router.GET("", func(c *gin.Context) {
 		params := utils.ParseSearchParameter(c)
 		keyword := c.Query("keyword")
-		status := c.GetBool("status")
+		status := c.Query("status")
 
 		data, pagination, err := services.GetKeys(*params, keyword, status)
 		if err != nil {

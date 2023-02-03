@@ -26,8 +26,10 @@ func RegisterLog(app *gin.Engine) {
 
 	router.GET("/healthcheck", func(c *gin.Context) {
 		params := utils.ParseSearchParameter(c)
+		location := c.Query("location")
+		status := c.Query("status")
 
-		data, pagination, err := services.GetHealthcheckLog(params)
+		data, pagination, err := services.GetHealthcheckLog(params, location, status)
 		if err != nil {
 			utils.ResponseServerError(c, err)
 			return
