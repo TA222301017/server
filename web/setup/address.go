@@ -8,7 +8,7 @@ func GetAddress() string {
 		host = "127.0.0.1"
 	}
 
-	port := os.Getenv("API_PORT")
+	port := os.Getenv("APP_PORT")
 	if port == "" {
 		port = "8080"
 	}

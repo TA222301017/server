@@ -1,9 +1,9 @@
 package main
 
 import (
-	"server/api"
 	"server/setup"
 	"server/udp"
+	"server/web"
 	"sync"
 )
 
@@ -20,7 +20,7 @@ func main() {
 	}()
 
 	go func() {
-		api.Run()
+		web.Run()
 		wg.Done()
 	}()
 

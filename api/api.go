@@ -8,14 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Run() {
-	api := gin.New()
-	address := setup.GetAddress()
+func RegisterAPIRoutes(app *gin.Engine) *gin.RouterGroup {
+	setup.Mode()
 
+	api := app.Group("/api")
 	// setup.CustomErrorHandler(api)
 	setup.CustomLogger(api)
 	setup.Cors(api)
-	setup.Mode()
 
 	controllers.RegisterAuthRoutes(api)
 
@@ -28,5 +27,5 @@ func Run() {
 	controllers.RegisterKeyRoutes(api)
 	controllers.RegisterLockRoutes(api)
 
-	api.Run(address)
+	return api
 }

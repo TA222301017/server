@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterAuthRoutes(app *gin.Engine) {
+func RegisterAuthRoutes(app *gin.RouterGroup) {
 	app.POST("/login", func(c *gin.Context) {
 		var body template.LoginRequest
 		if err := c.Bind(&body); err != nil {

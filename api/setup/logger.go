@@ -4,12 +4,18 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
-func CustomLogger(app *gin.Engine) {
+func CustomLogger(app *gin.RouterGroup) {
+	path := filepath.Join(".", "logs")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		os.Mkdir(path, os.ModePerm)
+	}
+
 	logFileName := os.Getenv("API_LOG_FILE")
 	if logFileName != "" {
 		if strings.HasSuffix(os.Getenv("API_LOG_FILE"), ".log") {
@@ -20,6 +26,7 @@ func CustomLogger(app *gin.Engine) {
 	} else {
 		logFileName = "api.log"
 	}
+	logFileName = "./logs/" + logFileName
 
 	logFile, err := os.OpenFile(logFileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {

@@ -13,7 +13,7 @@ var (
 	AllowedMethods []string = []string{"GET", "POST", "PUT", "PATCH", "OPTIONS", "DELETE"}
 )
 
-func Cors(app *gin.Engine) {
+func Cors(app *gin.RouterGroup) {
 	config := cors.Config{
 		AllowAllOrigins:  true,
 		AllowMethods:     AllowedMethods,

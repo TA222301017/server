@@ -1,10 +1,12 @@
 go.sum
 
 # key files
+keys
 *.pem
 
 # log files
 *.log
+logs
 
 # environment variables / config files
 *.env
@@ -21,3 +23,7 @@ go.sum
 build
 *.exe
 main
+*.zip
+*.rar
+static
+release
