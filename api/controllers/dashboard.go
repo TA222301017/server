@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterDashboard(app *gin.Engine) {
+func RegisterDashboardRoutes(app *gin.Engine) {
 	router := app.Group("dashboard")
 
 	router.GET("", func(c *gin.Context) {

@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
-	"server/udp/setup"
 	"server/udp/template"
 )
 
@@ -26,7 +25,7 @@ func TrimSignature(sig []byte) []byte {
 	return sig
 }
 
-func MakePacket(opCode byte, data []byte) (*template.BasePacket, error) {
+func MakePacket(opCode byte, data []byte, privKey *ecdsa.PrivateKey) (*template.BasePacket, error) {
 	packet := template.BasePacket{
 		OpCode: opCode,
 		Data:   data,
@@ -37,7 +36,7 @@ func MakePacket(opCode byte, data []byte) (*template.BasePacket, error) {
 	temp = append(temp, data...)
 
 	hash := sha256.Sum256(temp)
-	signature, err := ecdsa.SignASN1(rand.Reader, setup.PrivateKey, hash[:])
+	signature, err := ecdsa.SignASN1(rand.Reader, privKey, hash[:])
 	if err != nil {
 		return nil, err
 	}
@@ -52,6 +51,8 @@ func ParsePacket(pBytes []byte, pLen int) (*template.BasePacket, error) {
 		return nil, errors.New("packet too short")
 	}
 
+	pBytes = pBytes[:pLen]
+
 	return &template.BasePacket{
 		OpCode:    pBytes[0],
 		Data:      pBytes[1 : pLen-64],
@@ -61,6 +62,10 @@ func ParsePacket(pBytes []byte, pLen int) (*template.BasePacket, error) {
 
 func VerifyPacket(packet []byte, pk *ecdsa.PublicKey) error {
 	packetLen := len(packet)
+
+	if packetLen < 64 {
+		return errors.New("packet too short")
+	}
 
 	signature := packet[packetLen-64:]
 	temp := packet[:packetLen-64]

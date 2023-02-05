@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterLog(app *gin.Engine) {
+func RegisterLogRoutes(app *gin.Engine) {
 	router := app.Group("/log")
 
 	router.GET("/access", func(c *gin.Context) {

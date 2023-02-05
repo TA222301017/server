@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ResgisterPersonel(app *gin.Engine) {
+func ResgisterPersonelRoutes(app *gin.Engine) {
 	router := app.Group("/personel")
 
 	router.GET("/role", func(c *gin.Context) {

@@ -33,15 +33,17 @@ func Database() {
 	}
 	log.Println("Connected to database")
 
-	db.AutoMigrate(&models.HealthcheckLog{})
-	db.AutoMigrate(&models.AccessRule{})
-	db.AutoMigrate(&models.AccessLog{})
-	db.AutoMigrate(&models.Personel{})
-	db.AutoMigrate(&models.RSSILog{})
-	db.AutoMigrate(&models.User{})
-	db.AutoMigrate(&models.Role{})
-	db.AutoMigrate(&models.Lock{})
-	db.AutoMigrate(&models.Key{})
+	db.AutoMigrate(
+		&models.HealthcheckLog{},
+		&models.AccessRule{},
+		&models.AccessLog{},
+		&models.Personel{},
+		&models.RSSILog{},
+		&models.User{},
+		&models.Role{},
+		&models.Lock{},
+		&models.Key{},
+	)
 
 	roles := []models.Role{
 		{

@@ -1,10 +1,8 @@
 package usecases
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net"
 	"server/models"
@@ -22,19 +20,24 @@ func KeyExchange(p template.BasePacket, addr *net.UDPAddr) (*template.BasePacket
 	lockID := strings.ToUpper(hex.EncodeToString(p.Data[:16]))
 	pLen := len(p.Data)
 
-	x, y := elliptic.Unmarshal(elliptic.P224(), p.Data[16:pLen])
-	pubKey := ecdsa.PublicKey{
-		Curve: elliptic.P224(),
-		X:     x,
-		Y:     y,
+	if pLen < 16 {
+		return nil, errors.New("packet too short")
+	}
+
+	pubKey, err := utils.ParseECDSAPublickKey(p.Data[16:pLen])
+	if err != nil {
+		return nil, err
+	}
+
+	if err := utils.VerifyPacket(p.Bytes(), pubKey); err != nil {
+		return nil, err
 	}
 
 	if err := utils.SaveECDSAPublicKey(pubKey, lockID); err != nil {
 		return nil, err
 	}
 
-	serverPubKey := setup.PublicKey
-	serverPubKeyBytes := elliptic.Marshal(elliptic.P224(), serverPubKey.X, serverPubKey.Y)
+	serverPubKeyBytes := utils.MarshalECDSAPublicKey(setup.PublicKey)
 
 	lock := models.Lock{
 		LockID:    lockID,
@@ -50,51 +53,96 @@ func KeyExchange(p template.BasePacket, addr *net.UDPAddr) (*template.BasePacket
 	return utils.MakePacket(
 		template.KeyExchange,
 		append(p.Data[:16], serverPubKeyBytes...),
+		setup.PrivateKey,
 	)
 }
 
 func LogAccessEvent(p template.BasePacket) (*template.BasePacket, error) {
 	db := gsetup.DB
 
-	lockID := binary.BigEndian.Uint64(p.Data[:8])
-	keyID := binary.BigEndian.Uint64(p.Data[8:16])
+	pLen := len(p.Data)
+	if pLen < 32 {
+		return nil, errors.New("packet too short")
+	}
+
+	lockID := strings.ToUpper(hex.EncodeToString(p.Data[:16]))
+	keyID := strings.ToUpper(hex.EncodeToString(p.Data[16:32]))
+
+	var lock models.Lock
+	if err := db.First(&lock, "lock_id = ?", lockID).Error; err != nil {
+		return nil, err
+	}
+
+	pubKeyBytes, _ := hex.DecodeString(lock.PublicKey)
+	pubKey, _ := utils.ParseECDSAPublickKey(pubKeyBytes)
+	if err := utils.VerifyPacket(p.Bytes(), pubKey); err != nil {
+		return nil, errors.New("invalid packet signature")
+	}
+
+	var key models.Key
+	if err := db.First(&key, "key_id = ?", keyID).Error; err != nil {
+		return nil, err
+	}
 
 	var personel models.Personel
-	if err := db.First(&personel, "key_id = ?", keyID).Error; err != nil {
+	if err := db.First(&personel, "key_id = ?", key.ID).Error; err != nil {
 		return nil, err
 	}
 
 	accessLog := models.AccessLog{
-		LockID:           lockID,
-		KeyID:            keyID,
+		LockID:           lock.ID,
+		KeyID:            key.ID,
 		PersonelName:     personel.Name,
 		PersonelIDNumber: personel.IDNumber,
 		Timestamp:        time.Now(),
+		Location:         lock.Location,
 	}
 
 	if err := db.Create(&accessLog).Error; err != nil {
 		return nil, err
 	}
 
-	return utils.MakePacket(template.LogAccessEvent, p.Data)
+	return utils.MakePacket(template.LogAccessEvent, p.Data, setup.PrivateKey)
 }
 
 func LogRSSIEvent(p template.BasePacket) (*template.BasePacket, error) {
 	db := gsetup.DB
 
-	lockID := binary.BigEndian.Uint64(p.Data[:8])
-	keyID := binary.BigEndian.Uint64(p.Data[8:16])
-	rssi := int(p.Data[16])
+	pLen := len(p.Data)
+	if pLen < 33 {
+		return nil, errors.New("packet too short")
+	}
+
+	lockID := strings.ToUpper(hex.EncodeToString(p.Data[:16]))
+	keyID := strings.ToUpper(hex.EncodeToString(p.Data[16:32]))
+	rssi := int(p.Data[32])
+
+	var lock models.Lock
+	if err := db.First(&lock, "lock_id = ?", lockID).Error; err != nil {
+		return nil, errors.New("lock not found")
+	}
+
+	pubKeyBytes, _ := hex.DecodeString(lock.PublicKey)
+	pubKey, _ := utils.ParseECDSAPublickKey(pubKeyBytes)
+	if err := utils.VerifyPacket(p.Bytes(), pubKey); err != nil {
+		return nil, err
+	}
+
+	var key models.Key
+	if err := db.First(&key, "key_id = ?", keyID).Error; err != nil {
+		return nil, errors.New("key not found")
+	}
 
 	var personel models.Personel
-	db.First(&personel, "key_id = ?", keyID)
+	if err := db.First(&personel, "key_id = ?", key.ID).Error; err != nil {
+		return nil, errors.New("personel not found")
+	}
 
 	rssiLog := models.RSSILog{
 		RSSI:       rssi,
 		PersonelID: personel.ID,
-		Personel:   personel,
-		LockID:     lockID,
-		KeyID:      keyID,
+		LockID:     lock.ID,
+		KeyID:      key.ID,
 		Timestamp:  time.Now(),
 	}
 
@@ -102,21 +150,25 @@ func LogRSSIEvent(p template.BasePacket) (*template.BasePacket, error) {
 		return nil, err
 	}
 
-	return utils.MakePacket(template.LogRSSIEvent, p.Data)
+	return utils.MakePacket(template.LogRSSIEvent, p.Data, setup.PrivateKey)
 }
 
 func RequestHealthcheck(lock *models.Lock) (*template.BasePacket, error) {
-	var data []byte = make([]byte, 8)
+	var data []byte
 
-	pubKey, err := hex.DecodeString(lock.PublicKey)
+	temp, err := hex.DecodeString(lock.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	pubKey, err := utils.ParseECDSAPublickKey(temp)
 	if err != nil {
 		return nil, err
 	}
 
-	binary.BigEndian.PutUint64(data, lock.ID)
-	data = append(data, pubKey...)
+	lockID, _ := hex.DecodeString(lock.LockID)
+	data = append(lockID, temp...)
 
-	packet, err := utils.MakePacket(template.LogHealthcheckEvent, data)
+	packet, err := utils.MakePacket(template.LogHealthcheckEvent, data, setup.PrivateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -126,5 +178,5 @@ func RequestHealthcheck(lock *models.Lock) (*template.BasePacket, error) {
 		return nil, err
 	}
 
-	return res, utils.VerifyPacket(res.Bytes(), setup.PublicKey)
+	return res, utils.VerifyPacket(res.Bytes(), pubKey)
 }

@@ -8,6 +8,8 @@ import (
 	"server/udp/usecases"
 	"sync"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 func GetAccessLog(p template.SearchParameter, location string, personel string) ([]template.AccessLogData, *template.Pagination, error) {
@@ -19,32 +21,36 @@ func GetAccessLog(p template.SearchParameter, location string, personel string) 
 	limit := p.Limit
 
 	var cnt int64
-	if err := db.
-		Where(`
-			location LIKE ? OR 
-			personel_name LIKE ? OR 
-			personel_id_number LIKE ? AND 
-			timestamp BETWEEN ? AND ?
-		`, location, personel, personel, p.StartDate, p.EndDate).
-		Find(&models.AccessLog{}).Count(&cnt).Error; err != nil {
-		return nil, nil, err
-	}
-
+	var query *gorm.DB
 	var logs []models.AccessLog
-	if err := db.
-		Limit(limit).Offset(offset).
-		Where(`
+	var data []template.AccessLogData = make([]template.AccessLogData, 0)
+
+	query = db.Where(`
 			location LIKE ? OR 
 			personel_name LIKE ? OR 
 			personel_id_number LIKE ? AND 
 			timestamp BETWEEN ? AND ?
-		`, location, personel, personel, p.StartDate, p.EndDate).
-		Preload("Lock").Preload("Key").
-		Find(&logs).Error; err != nil {
+		`, location, personel, personel, p.StartDate, p.EndDate)
+
+	if err := query.Find(&models.AccessLog{}).Count(&cnt).Error; err != nil {
 		return nil, nil, err
 	}
 
-	var data []template.AccessLogData = make([]template.AccessLogData, 0)
+	if p.Limit < 0 {
+		if err := query.
+			Preload("Lock").Preload("Key").
+			Find(&logs).Error; err != nil {
+			return nil, nil, err
+		}
+	} else {
+		if err := query.
+			Limit(limit).Offset(offset).
+			Preload("Lock").Preload("Key").
+			Find(&logs).Error; err != nil {
+			return nil, nil, err
+		}
+	}
+
 	for _, l := range logs {
 		data = append(data, template.AccessLogData{
 			ID:         l.ID,
@@ -78,27 +84,10 @@ func GetRSSILog(p *template.SearchParameter, keyword string) ([]template.RSSILog
 	limit := p.Limit
 
 	var cnt int64
-	if err := db.Raw(`
-	SELECT cnt FROM (
-		SELECT
-			COUNT(*) AS cnt
-		FROM rssi_logs
-			LEFT JOIN personels ON rssi_logs.personel_id = personels.id
-			LEFT JOIN locks ON rssi_logs.lock_id = locks.id
-			LEFT JOIN keys ON rssi_logs.key_id = keys.id
-		WHERE
-			rssi_logs.timestamp BETWEEN ? AND ? OR
-			personels.name LIKE ? OR 
-			locks.label LIKE ? OR 
-			keys.label LIKE ?
-	) AS t
-	`, p.StartDate, p.EndDate, keyword, keyword, keyword).
-		Scan(&cnt).Error; err != nil {
-		return nil, nil, err
-	}
-
+	var queryString string
 	var data []template.RSSILogData
-	if err := db.Raw(`
+
+	queryString = `
 	SELECT
 		rssi_logs.*,
 		personels.name AS personel, 
@@ -113,12 +102,29 @@ func GetRSSILog(p *template.SearchParameter, keyword string) ([]template.RSSILog
 		rssi_logs.timestamp BETWEEN ? AND ? OR
 		personels.name LIKE ? OR 
 		locks.label LIKE ? OR 
-		keys.label LIKE ?
-	ORDER BY rssi_logs.created_at DESC
-	OFFSET ? LIMIT ?
-	`, p.StartDate, p.EndDate, keyword, keyword, keyword, offset, limit).
-		Scan(&data).Error; err != nil {
+		keys.label LIKE ?`
+
+	if err := db.Raw(
+		fmt.Sprintf("SELECT COUNT(*) AS cnt FROM ( %s ) AS t", queryString),
+		p.StartDate, p.EndDate, keyword, keyword, keyword).
+		Scan(&cnt).Error; err != nil {
 		return nil, nil, err
+	}
+
+	if p.Limit < 0 {
+		if err := db.Raw(
+			fmt.Sprintf("%s ORDER BY rssi_logs.created_at DESC", queryString),
+			p.StartDate, p.EndDate, keyword, keyword, keyword).
+			Scan(&data).Error; err != nil {
+			return nil, nil, err
+		}
+	} else {
+		if err := db.Raw(
+			fmt.Sprintf("%s ORDER BY rssi_logs.created_at DESC OFFSET ? LIMIT ?", queryString),
+			p.StartDate, p.EndDate, keyword, keyword, keyword, offset, limit).
+			Scan(&data).Error; err != nil {
+			return nil, nil, err
+		}
 	}
 
 	last := cnt / int64(limit)
@@ -166,11 +172,20 @@ func GetHealthcheckLog(p *template.SearchParameter, location string, status stri
 			return nil, nil, err
 		}
 
-		if err := db.Raw(
-			fmt.Sprintf("%s ORDER BY healthcheck_logs.timestamp DESC OFFSET ? LIMIT ?", queryString),
-			p.StartDate, p.EndDate, location, location, offset, limit).
-			Scan(&data).Error; err != nil {
-			return nil, nil, err
+		if p.Limit < 0 {
+			if err := db.Raw(
+				fmt.Sprintf("%s ORDER BY healthcheck_logs.timestamp DESC", queryString),
+				p.StartDate, p.EndDate, location, location).
+				Scan(&data).Error; err != nil {
+				return nil, nil, err
+			}
+		} else {
+			if err := db.Raw(
+				fmt.Sprintf("%s ORDER BY healthcheck_logs.timestamp DESC OFFSET ? LIMIT ?", queryString),
+				p.StartDate, p.EndDate, location, location, offset, limit).
+				Scan(&data).Error; err != nil {
+				return nil, nil, err
+			}
 		}
 	} else {
 		queryString = `
@@ -196,13 +211,21 @@ func GetHealthcheckLog(p *template.SearchParameter, location string, status stri
 			return nil, nil, err
 		}
 
-		if err := db.Raw(
-			fmt.Sprintf("%s ORDER BY healthcheck_logs.timestamp DESC OFFSET ? LIMIT ?", queryString),
-			p.StartDate, p.EndDate, status == "active", location, location, offset, limit).
-			Scan(&data).Error; err != nil {
-			return nil, nil, err
+		if p.Limit < 0 {
+			if err := db.Raw(
+				fmt.Sprintf("%s ORDER BY healthcheck_logs.timestamp DESC", queryString),
+				p.StartDate, p.EndDate, status == "active", location, location).
+				Scan(&data).Error; err != nil {
+				return nil, nil, err
+			}
+		} else {
+			if err := db.Raw(
+				fmt.Sprintf("%s ORDER BY healthcheck_logs.timestamp DESC OFFSET ? LIMIT ?", queryString),
+				p.StartDate, p.EndDate, status == "active", location, location, offset, limit).
+				Scan(&data).Error; err != nil {
+				return nil, nil, err
+			}
 		}
-
 	}
 
 	last := cnt / int64(limit)
@@ -266,6 +289,12 @@ func CheckLock(lockID uint64) (*models.HealthcheckLog, error) {
 		LockID:    lock.ID,
 		Timestamp: time.Now(),
 		Status:    err == nil,
+	}
+
+	lock.Status = err == nil
+
+	if err := db.Save(&lock).Error; err != nil {
+		return nil, err
 	}
 
 	if err := db.Create(&status).Error; err != nil {

@@ -27,18 +27,6 @@ func handlePacket(conn *net.UDPConn, request <-chan *Request) {
 			log.Printf("| 0x%x | KEY EXCHANGE\n", r.Packet.OpCode)
 			res, err = usecases.KeyExchange(*r.Packet, r.RemoteAddr)
 
-		case template.AddAccessRule:
-			log.Printf("| UNIMPLEMENTED!\n")
-			res, err = utils.MakePacket(r.Packet.OpCode, r.Packet.Data)
-
-		case template.EditAccessRule:
-			log.Printf("| UNIMPLEMENTED!\n")
-			res, err = utils.MakePacket(r.Packet.OpCode, r.Packet.Data)
-
-		case template.DeleteAccessRule:
-			log.Printf("| UNIMPLEMENTED!\n")
-			res, err = utils.MakePacket(r.Packet.OpCode, r.Packet.Data)
-
 		case template.LogAccessEvent:
 			log.Printf("| 0x%x | LOG ACCESS EVENT\n", r.Packet.OpCode)
 			res, err = usecases.LogAccessEvent(*r.Packet)
@@ -49,14 +37,17 @@ func handlePacket(conn *net.UDPConn, request <-chan *Request) {
 
 		case template.LogHealthcheckEvent:
 			log.Printf("| UNIMPLEMENTED!\n")
-			res, err = utils.MakePacket(r.Packet.OpCode, r.Packet.Data)
+			res, err = utils.MakePacket(r.Packet.OpCode, r.Packet.Data, setup.PrivateKey)
 
 		default:
 			log.Printf("| unknown op code, echoing packet data\n")
-			res, err = utils.MakePacket(r.Packet.OpCode, r.Packet.Data)
+			res, err = utils.MakePacket(r.Packet.OpCode, r.Packet.Data, setup.PrivateKey)
 		}
 
-		conn.WriteToUDP(res.Bytes(), r.RemoteAddr)
+		if res != nil {
+			conn.WriteToUDP(res.Bytes(), r.RemoteAddr)
+		}
+
 		if err != nil {
 			log.Printf("| %s\n", err)
 		}

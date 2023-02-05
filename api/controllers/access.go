@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterAccess(app *gin.Engine) {
+func RegisterAccessRoutes(app *gin.Engine) {
 	router := app.Group("/access")
 
 	router.GET("", func(c *gin.Context) {

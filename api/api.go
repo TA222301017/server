@@ -17,16 +17,16 @@ func Run() {
 	setup.Cors(api)
 	setup.Mode()
 
-	controllers.RegisterAuth(api)
+	controllers.RegisterAuthRoutes(api)
 
 	api.Use(middlewares.Auth())
 
-	controllers.RegisterDashboard(api)
-	controllers.RegisterAccess(api)
-	controllers.ResgisterPersonel(api)
-	controllers.RegisterLog(api)
-	controllers.RegisterKey(api)
-	controllers.RegisterLock(api)
+	controllers.RegisterDashboardRoutes(api)
+	controllers.RegisterAccessRoutes(api)
+	controllers.ResgisterPersonelRoutes(api)
+	controllers.RegisterLogRoutes(api)
+	controllers.RegisterKeyRoutes(api)
+	controllers.RegisterLockRoutes(api)
 
 	api.Run(address)
 }

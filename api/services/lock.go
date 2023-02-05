@@ -28,9 +28,12 @@ func GetLocks(p template.SearchParameter, keyword string, status string) ([]mode
 		return nil, nil, err
 	}
 
+	if p.Limit > 0 {
+		query = query.Limit(limit).Offset(offset)
+	}
+
 	var locks []models.Lock
-	if err := query.Limit(limit).Offset(offset).
-		Find(&locks).Error; err != nil {
+	if err := query.Order("created_at DESC").Find(&locks).Error; err != nil {
 		return nil, nil, err
 	}
 

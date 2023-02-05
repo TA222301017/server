@@ -65,8 +65,12 @@ func GetPersonels(p template.SearchParameter, keyword string, status string) ([]
 		return nil, nil, err
 	}
 
+	if p.Limit < 0 {
+		query = query.Limit(limit).Offset(offset)
+	}
+
 	var personels []models.Personel
-	if err := query.Limit(limit).Offset(offset).Preload("Role").Find(&personels).Error; err != nil {
+	if err := query.Preload("Role").Find(&personels).Error; err != nil {
 		return nil, nil, err
 	}
 

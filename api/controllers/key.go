@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterKey(app *gin.Engine) {
+func RegisterKeyRoutes(app *gin.Engine) {
 	router := app.Group("/device/key")
 
 	router.GET("", func(c *gin.Context) {

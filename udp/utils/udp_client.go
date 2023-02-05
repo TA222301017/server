@@ -10,12 +10,12 @@ import (
 
 var RemotePort string = "8000"
 
-func init() {
-
-}
-
-func SendUDPPacket(p *template.BasePacket, ipAddress string) (*template.BasePacket, error) {
+func SendUDPPacket(p *template.BasePacket, ipAddress string, port ...string) (*template.BasePacket, error) {
 	lockAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%s", ipAddress, RemotePort))
+	if len(port) == 1 {
+		lockAddr, err = net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%s", ipAddress, port[0]))
+	}
+
 	if err != nil {
 		return nil, err
 	}

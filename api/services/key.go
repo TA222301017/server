@@ -20,6 +20,7 @@ func GetKeys(p template.SearchParameter, keyword string, status string) ([]templ
 	var queryString string
 	var keys []template.KeyData
 	var cnt int64
+
 	if status == "any" {
 		queryString = `
 		SELECT 
@@ -44,11 +45,20 @@ func GetKeys(p template.SearchParameter, keyword string, status string) ([]templ
 			return nil, nil, err
 		}
 
-		if err := db.Raw(
-			fmt.Sprintf("%s ORDER BY keys.created_at DESC OFFSET ? LIMIT ?", queryString),
-			keyword, keyword, keyword, offset, limit).
-			Scan(&keys).Error; err != nil {
-			return nil, nil, err
+		if p.Limit < 0 {
+			if err := db.Raw(
+				fmt.Sprintf("%s ORDER BY keys.created_at DESC", queryString),
+				keyword, keyword, keyword).
+				Scan(&keys).Error; err != nil {
+				return nil, nil, err
+			}
+		} else {
+			if err := db.Raw(
+				fmt.Sprintf("%s ORDER BY keys.created_at DESC OFFSET ? LIMIT ?", queryString),
+				keyword, keyword, keyword, offset, limit).
+				Scan(&keys).Error; err != nil {
+				return nil, nil, err
+			}
 		}
 	} else {
 		queryString = `
@@ -77,11 +87,20 @@ func GetKeys(p template.SearchParameter, keyword string, status string) ([]templ
 			return nil, nil, err
 		}
 
-		if err := db.Raw(
-			fmt.Sprintf("%s ORDER BY keys.created_at DESC OFFSET ? LIMIT ?", queryString),
-			status == "active", keyword, keyword, keyword, offset, limit).
-			Scan(&keys).Error; err != nil {
-			return nil, nil, err
+		if p.Limit < 0 {
+			if err := db.Raw(
+				fmt.Sprintf("%s ORDER BY keys.created_at DESC", queryString),
+				status == "active", keyword, keyword, keyword).
+				Scan(&keys).Error; err != nil {
+				return nil, nil, err
+			}
+		} else {
+			if err := db.Raw(
+				fmt.Sprintf("%s ORDER BY keys.created_at DESC OFFSET ? LIMIT ?", queryString),
+				status == "active", keyword, keyword, keyword, offset, limit).
+				Scan(&keys).Error; err != nil {
+				return nil, nil, err
+			}
 		}
 	}
 

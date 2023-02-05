@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterLock(app *gin.Engine) {
+func RegisterLockRoutes(app *gin.Engine) {
 	router := app.Group("/device/lock")
 
 	router.GET("", func(c *gin.Context) {
