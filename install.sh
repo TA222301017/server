@@ -54,12 +54,11 @@ mkdir -p $CWD
 cp .env $CWD/.env
 
 echo "Downloading latest server executable..."
-wget --quiet https://github.com/TA222301017/server/releases/download/$SERVER_TAG/server-linux-$ARCH
-mv server-linux-$ARCH $CWD/server
+wget --quiet https://github.com/TA222301017/server/releases/download/$SERVER_TAG/server-linux-$ARCH -O $CWD/server
 chmod +x $CWD/server
 
 echo "Downloading latest admin panel build..."
-wget --quiet https://github.com/TA222301017/admin-panel-js/releases/download/$ADMIN_PANEL_TAG/dist.zip
+wget --quiet https://github.com/TA222301017/admin-panel-js/releases/download/$ADMIN_PANEL_TAG/dist.zip -O dist.zip
 unzip dist.zip
 mv dist $CWD/static
 rm dist.zip
