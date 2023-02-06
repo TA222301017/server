@@ -79,7 +79,7 @@ func LoadECDSAPublicKey(name string) (*ecdsa.PublicKey, error) {
 
 func SaveECDSAPublicKey(pub *ecdsa.PublicKey, name string) error {
 	filename := fmt.Sprintf("keys/%s_pub.pem", name)
-	pubFile, err := os.OpenFile(filename, os.O_CREATE, 0666)
+	pubFile, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func SaveECDSAPublicKey(pub *ecdsa.PublicKey, name string) error {
 
 func SaveECDSAPrivateKey(priv *ecdsa.PrivateKey, name string) error {
 	filename := fmt.Sprintf("keys/%s_priv.pem", name)
-	privFile, err := os.OpenFile(filename, os.O_CREATE, 0666)
+	privFile, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		return err
 	}

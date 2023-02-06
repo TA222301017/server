@@ -30,7 +30,7 @@ func Static(app *gin.Engine) {
 
 	path = filepath.Join(".", "static", "index.html")
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		file, _ := os.OpenFile(path, os.O_CREATE, 0666)
+		file, _ := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		file.Write([]byte(defaultIndexHTMLContent))
 		file.Close()
 	}

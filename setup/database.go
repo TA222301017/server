@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"server/api/utils"
 	"server/models"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -72,6 +74,18 @@ func Database() {
 		},
 	}
 
+	user := models.User{
+		BaseModel: models.BaseModel{
+			ID:        1,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		Name:     "Default User",
+		Username: "username",
+		Password: utils.HashPassword("password"),
+	}
+
+	db.Create(&user)
 	for _, r := range roles {
 		db.Create(&r)
 	}
