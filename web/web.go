@@ -11,6 +11,7 @@ func Run() {
 	app := gin.New()
 	address := setup.GetAddress()
 
+	setup.Cors(app)
 	setup.Static(app)
 
 	api.RegisterAPIRoutes(app)

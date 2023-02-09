@@ -86,6 +86,7 @@ EOF
 
 link $CWD/${APP_NAME//[$'\t\r\n ']}.service /etc/systemd/system/${APP_NAME//[$'\t\r\n ']}.service
 systemctl daemon-reload
+systemctl enable ${APP_NAME//[$'\t\r\n ']}.service
 systemctl start ${APP_NAME//[$'\t\r\n ']}.service
 
 echo "Done, server started on $APP_HOST:$APP_PORT"

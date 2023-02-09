@@ -16,8 +16,9 @@ func RegisterKeyRoutes(app *gin.RouterGroup) {
 		params := utils.ParseSearchParameter(c)
 		keyword := c.Query("keyword")
 		status := c.Query("status")
+		notowned := c.GetBool("notowned")
 
-		data, pagination, err := services.GetKeys(*params, keyword, status)
+		data, pagination, err := services.GetKeys(*params, keyword, status, notowned)
 		if err != nil {
 			utils.ResponseServerError(c, err)
 			return

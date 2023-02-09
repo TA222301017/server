@@ -17,8 +17,17 @@ func RegisterPersonel(a template.AddPersonelRequest) (*template.PersonelData, er
 		return nil, errors.New("role not found")
 	}
 
-	if err := db.First(&models.Key{}, a.KeyID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, errors.New("key not found")
+	if a.KeyID != 0 {
+		if err := db.First(&models.Key{}, a.KeyID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("key not found")
+		}
+
+		var p models.Personel
+		if err := db.First(&p, "key_id = ?", a.KeyID).Error; err == nil {
+			if p.ID != 0 {
+				return nil, errors.New("key already used")
+			}
+		}
 	}
 
 	personel := models.Personel{
@@ -132,10 +141,20 @@ func EditPersonel(e template.EditPersonelRequest, personelID uint64) (*template.
 	if err := db.First(&p, personelID).Preload("Role").Error; errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, RecordsNotFound
 	}
+	
 	role = p.Role
 
 	if e.KeyID != 0 {
-		p.KeyID = e.KeyID
+		if err := db.First(&models.Key{}, e.KeyID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("key not found")
+		}
+
+		var p models.Personel
+		if err := db.First(&p, "key_id = ?", e.KeyID).Error; err == nil {
+			if p.ID != 0 {
+				return nil, errors.New("key already used")
+			}
+		}
 	}
 
 	if e.Description != "" {

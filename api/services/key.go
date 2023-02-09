@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetKeys(p template.SearchParameter, keyword string, status string) ([]template.KeyData, *template.Pagination, error) {
+func GetKeys(p template.SearchParameter, keyword string, status string, notowned bool) ([]template.KeyData, *template.Pagination, error) {
 	db := setup.DB
 
 	offset := (p.Page - 1) * p.Limit
@@ -21,7 +21,12 @@ func GetKeys(p template.SearchParameter, keyword string, status string) ([]templ
 	var keys []template.KeyData
 	var cnt int64
 
-	if status == "any" {
+	if notowned {
+		var ids []uint64
+		if err := db.Raw("SELECT key_id FROM personels WHERE key_id != 0").Scan(&ids).Error; err != nil {
+			return nil, nil, err
+		}
+
 		queryString = `
 		SELECT 
 			keys.id AS id, 
@@ -34,10 +39,12 @@ func GetKeys(p template.SearchParameter, keyword string, status string) ([]templ
 		LEFT JOIN personels
 		ON keys.id = personels.key_id
 		WHERE
-			keys.label LIKE ? OR
-			keys.key_id LIKE ? OR
-			personels.name LIKE ?`
-
+			personels.id NOT IN ? AND 
+			(
+				keys.label LIKE ? OR
+				keys.key_id LIKE ? OR
+				personels.name LIKE ?
+			)`
 		if err := db.Raw(
 			fmt.Sprintf("SELECT COUNT(*) AS cnt FROM ( %s ) AS t", queryString),
 			keyword, keyword, keyword).
@@ -61,45 +68,87 @@ func GetKeys(p template.SearchParameter, keyword string, status string) ([]templ
 			}
 		}
 	} else {
-		queryString = `
-		SELECT 
-			keys.id AS id, 
-			keys.key_id AS key_id, 
-			keys.status AS status, 
-			keys.label AS name,
-			personels.name AS owner,
-			personels.id AS owner_id 
-		FROM keys 
-		LEFT JOIN personels
-		ON keys.id = personels.key_id
-		WHERE
-			keys.status = ? AND
-			(
+
+		if status == "any" {
+			queryString = `
+			SELECT 
+				keys.id AS id, 
+				keys.key_id AS key_id, 
+				keys.status AS status, 
+				keys.label AS name,
+				personels.name AS owner,
+				personels.id AS owner_id 
+			FROM keys 
+			LEFT JOIN personels
+			ON keys.id = personels.key_id
+			WHERE
 				keys.label LIKE ? OR
 				keys.key_id LIKE ? OR
-				personels.name LIKE ?
-			)`
+				personels.name LIKE ?`
 
-		if err := db.Raw(
-			fmt.Sprintf("SELECT COUNT(*) AS cnt FROM ( %s ) AS t", queryString),
-			status == "active", keyword, keyword, keyword).
-			Scan(&cnt).Error; err != nil {
-			return nil, nil, err
-		}
-
-		if p.Limit < 0 {
 			if err := db.Raw(
-				fmt.Sprintf("%s ORDER BY keys.created_at DESC", queryString),
-				status == "active", keyword, keyword, keyword).
-				Scan(&keys).Error; err != nil {
+				fmt.Sprintf("SELECT COUNT(*) AS cnt FROM ( %s ) AS t", queryString),
+				keyword, keyword, keyword).
+				Scan(&cnt).Error; err != nil {
 				return nil, nil, err
 			}
+
+			if p.Limit < 0 {
+				if err := db.Raw(
+					fmt.Sprintf("%s ORDER BY keys.created_at DESC", queryString),
+					keyword, keyword, keyword).
+					Scan(&keys).Error; err != nil {
+					return nil, nil, err
+				}
+			} else {
+				if err := db.Raw(
+					fmt.Sprintf("%s ORDER BY keys.created_at DESC OFFSET ? LIMIT ?", queryString),
+					keyword, keyword, keyword, offset, limit).
+					Scan(&keys).Error; err != nil {
+					return nil, nil, err
+				}
+			}
 		} else {
+			queryString = `
+			SELECT 
+				keys.id AS id, 
+				keys.key_id AS key_id, 
+				keys.status AS status, 
+				keys.label AS name,
+				personels.name AS owner,
+				personels.id AS owner_id 
+			FROM keys 
+			LEFT JOIN personels
+			ON keys.id = personels.key_id
+			WHERE
+				keys.status = ? AND
+				(
+					keys.label LIKE ? OR
+					keys.key_id LIKE ? OR
+					personels.name LIKE ?
+				)`
+
 			if err := db.Raw(
-				fmt.Sprintf("%s ORDER BY keys.created_at DESC OFFSET ? LIMIT ?", queryString),
-				status == "active", keyword, keyword, keyword, offset, limit).
-				Scan(&keys).Error; err != nil {
+				fmt.Sprintf("SELECT COUNT(*) AS cnt FROM ( %s ) AS t", queryString),
+				status == "active", keyword, keyword, keyword).
+				Scan(&cnt).Error; err != nil {
 				return nil, nil, err
+			}
+
+			if p.Limit < 0 {
+				if err := db.Raw(
+					fmt.Sprintf("%s ORDER BY keys.created_at DESC", queryString),
+					status == "active", keyword, keyword, keyword).
+					Scan(&keys).Error; err != nil {
+					return nil, nil, err
+				}
+			} else {
+				if err := db.Raw(
+					fmt.Sprintf("%s ORDER BY keys.created_at DESC OFFSET ? LIMIT ?", queryString),
+					status == "active", keyword, keyword, keyword, offset, limit).
+					Scan(&keys).Error; err != nil {
+					return nil, nil, err
+				}
 			}
 		}
 	}

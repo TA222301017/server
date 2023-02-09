@@ -14,7 +14,6 @@ func RegisterAPIRoutes(app *gin.Engine) *gin.RouterGroup {
 	api := app.Group("/api")
 	// setup.CustomErrorHandler(api)
 	setup.CustomLogger(api)
-	setup.Cors(api)
 
 	controllers.RegisterAuthRoutes(api)
 
