@@ -26,7 +26,7 @@ func AddAccessRule(accessRule models.AccessRule, lock models.Lock, key models.Ke
 		return nil, err
 	}
 
-	return utils.SendUDPPacket(packet, accessRule.Lock.IpAddress)
+	return utils.SendUDPPacket(packet, lock.IpAddress)
 }
 
 func EditAccessRule(accessRule models.AccessRule, lock models.Lock, key models.Key) (*template.BasePacket, error) {
@@ -46,7 +46,7 @@ func EditAccessRule(accessRule models.AccessRule, lock models.Lock, key models.K
 		return nil, err
 	}
 
-	return utils.SendUDPPacket(packet, accessRule.Lock.IpAddress)
+	return utils.SendUDPPacket(packet, lock.IpAddress)
 }
 
 func DeleteAccessRule(accessRuleID uint64, ipAddress string) (*template.BasePacket, error) {

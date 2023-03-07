@@ -230,11 +230,16 @@ func DeleteAccessRule(accessRuleID uint64) error {
 	db := setup.DB
 
 	var accessRule models.AccessRule
-	if err := db.First(&accessRule, accessRuleID).Preload("Lock").Error; err != nil {
+	if err := db.First(&accessRule, accessRuleID).Error; err != nil {
 		return err
 	}
 
-	if _, err := usecases.DeleteAccessRule(accessRuleID, accessRule.Lock.IpAddress); err != nil {
+	var lock models.Lock
+	if err := db.First(&lock, accessRule.LockID).Error; err != nil {
+		return err
+	}
+
+	if _, err := usecases.DeleteAccessRule(accessRuleID, lock.IpAddress); err != nil {
 		return err
 	}
 

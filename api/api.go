@@ -25,6 +25,8 @@ func RegisterAPIRoutes(app *gin.Engine) *gin.RouterGroup {
 	controllers.RegisterLogRoutes(api)
 	controllers.RegisterKeyRoutes(api)
 	controllers.RegisterLockRoutes(api)
+	controllers.RegisterAdminRoutes(api)
+	controllers.ResgiterPlanRoutes(api)
 
 	return api
 }

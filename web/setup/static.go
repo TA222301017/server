@@ -37,4 +37,5 @@ func Static(app *gin.Engine) {
 
 	app.LoadHTMLGlob("static/*.html")
 	app.Use(static.Serve("/static", static.LocalFile("static", false)))
+	app.Use(static.Serve("/api/plan/images", static.LocalFile("plans", false)))
 }

@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetKeys(p template.SearchParameter, keyword string, status string, notowned bool) ([]template.KeyData, *template.Pagination, error) {
+func GetKeys(p template.SearchParameter, keyword string, status string, notOwned bool) ([]template.KeyData, *template.Pagination, error) {
 	db := setup.DB
 
 	offset := (p.Page - 1) * p.Limit
@@ -21,7 +21,7 @@ func GetKeys(p template.SearchParameter, keyword string, status string, notowned
 	var keys []template.KeyData
 	var cnt int64
 
-	if notowned {
+	if notOwned {
 		var ids []uint64
 		if err := db.Raw("SELECT key_id FROM personels WHERE key_id != 0").Scan(&ids).Error; err != nil {
 			return nil, nil, err
@@ -68,7 +68,6 @@ func GetKeys(p template.SearchParameter, keyword string, status string, notowned
 			}
 		}
 	} else {
-
 		if status == "any" {
 			queryString = `
 			SELECT 

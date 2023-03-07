@@ -39,15 +39,34 @@ func KeyExchange(p template.BasePacket, addr *net.UDPAddr) (*template.BasePacket
 
 	serverPubKeyBytes := utils.MarshalECDSAPublicKey(setup.PublicKey)
 
-	lock := models.Lock{
-		LockID:    lockID,
-		IpAddress: addr.IP.String(),
-		Label:     fmt.Sprintf("Lock on %s", addr.IP.String()),
-		PublicKey: hex.EncodeToString(p.Data[16:pLen]),
+	var lock models.Lock
+	var cnt int64
+	if err := db.First(&lock, "lock_id = ?", lockID).Count(&cnt).Error; err != nil {
+		return nil, err
 	}
 
-	if err := db.Create(&lock).Error; err != nil {
-		return nil, err
+	if cnt == 0 {
+		lock := models.Lock{
+			LockID:    lockID,
+			IpAddress: addr.IP.String(),
+			Label:     fmt.Sprintf("Lock on %s", addr.IP.String()),
+			PublicKey: hex.EncodeToString(p.Data[16:pLen]),
+			Status:    true,
+		}
+
+		if err := db.Create(&lock).Error; err != nil {
+			return nil, err
+		}
+	} else {
+		lock := models.Lock{
+			IpAddress: addr.IP.String(),
+			PublicKey: hex.EncodeToString(p.Data[16:pLen]),
+			Status:    true,
+		}
+
+		if err := db.Save(&lock).Error; err != nil {
+			return nil, err
+		}
 	}
 
 	return utils.MakePacket(

@@ -85,3 +85,22 @@ func EditLock(e template.EditLockRequest, lockID uint64) (*models.Lock, error) {
 
 	return &lock, nil
 }
+
+func DeleteLock(lockID uint64) error {
+	db := setup.DB
+
+	var lock models.Lock
+	if err := db.First(&lock, lockID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+		return RecordsNotFound
+	}
+
+	if err := db.Delete(&models.AccessRule{}, "lock_id = ?", lockID).Error; err != nil {
+		return err
+	}
+
+	if err := db.Delete(&models.Lock{}, lockID).Error; err != nil {
+		return err
+	}
+
+	return nil
+}

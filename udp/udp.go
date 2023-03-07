@@ -22,6 +22,7 @@ func handlePacket(conn *net.UDPConn, request <-chan *Request) {
 	)
 
 	for r := range request {
+		log.Printf("| %s\n", r.RemoteAddr.String())
 		switch r.Packet.OpCode {
 		case template.KeyExchange:
 			log.Printf("| 0x%x | KEY EXCHANGE\n", r.Packet.OpCode)

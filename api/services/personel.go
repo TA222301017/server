@@ -5,6 +5,7 @@ import (
 	"server/api/template"
 	"server/models"
 	"server/setup"
+	"server/udp/usecases"
 
 	"gorm.io/gorm"
 )
@@ -134,14 +135,15 @@ func EditPersonel(e template.EditPersonelRequest, personelID uint64) (*template.
 	db := setup.DB
 
 	var (
-		p    models.Personel
-		role models.Role
+		p     models.Personel
+		role  models.Role
+		rules []models.AccessRule
 	)
 
 	if err := db.First(&p, personelID).Preload("Role").Error; errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, RecordsNotFound
 	}
-	
+
 	role = p.Role
 
 	if e.KeyID != 0 {
@@ -153,6 +155,30 @@ func EditPersonel(e template.EditPersonelRequest, personelID uint64) (*template.
 		if err := db.First(&p, "key_id = ?", e.KeyID).Error; err == nil {
 			if p.ID != 0 {
 				return nil, errors.New("key already used")
+			}
+		}
+
+		if err := db.Preload("Lock").Preload("Key").Find(&rules).Where("personel_id = ?", personelID).Error; err != nil {
+			return nil, err
+		}
+
+		for _, rule := range rules {
+			rule.KeyID = e.KeyID
+			_, err := usecases.EditAccessRule(rule, rule.Lock, rule.Key)
+			if err == nil {
+				db.Save(&rule)
+			}
+		}
+	} else {
+		if err := db.Preload("Lock").Preload("Key").Find(&rules).Where("personel_id = ?", personelID).Error; err != nil {
+			return nil, err
+		}
+
+		for _, rule := range rules {
+			rule.KeyID = e.KeyID
+			_, err := usecases.DeleteAccessRule(rule.ID, rule.Lock.IpAddress)
+			if err == nil {
+				db.Delete(&rule)
 			}
 		}
 	}
