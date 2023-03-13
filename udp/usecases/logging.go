@@ -12,6 +12,8 @@ import (
 	"server/udp/utils"
 	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 func KeyExchange(p template.BasePacket, addr *net.UDPAddr) (*template.BasePacket, error) {
@@ -42,7 +44,9 @@ func KeyExchange(p template.BasePacket, addr *net.UDPAddr) (*template.BasePacket
 	var lock models.Lock
 	var cnt int64
 	if err := db.First(&lock, "lock_id = ?", lockID).Count(&cnt).Error; err != nil {
-		return nil, err
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
 	}
 
 	if cnt == 0 {
