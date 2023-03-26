@@ -129,7 +129,7 @@ func main() {
 		data := append(lockID, keyID...)
 		data = append(data, randomBytes(1)...)
 		packet, err := utils.MakePacket(template.LogRSSIEvent, data, privKey)
-		fmt.Println(packet.Bytes())
+		fmt.Println(hex.EncodeToString(packet.Bytes()))
 		if err != nil {
 			fmt.Println(err)
 			return
