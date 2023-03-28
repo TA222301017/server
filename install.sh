@@ -89,4 +89,12 @@ systemctl daemon-reload
 systemctl enable ${APP_NAME//[$'\t\r\n ']}.service
 systemctl start ${APP_NAME//[$'\t\r\n ']}.service
 
+echo "Creating backup script..."
+cat > $CWD/backup.sh << EOF
+
+sudo -u postgres pg_dump ${DB_NAME//[$'\t\r\n ']} > ${DB_NAME//[$'\t\r\n ']}.sql
+$CWD/server clear_logs
+
+EOF
+
 echo "Done, server started on $APP_HOST:$APP_PORT"

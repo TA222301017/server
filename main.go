@@ -1,33 +1,44 @@
 package main
 
 import (
+	"os"
+	"server/models"
 	"server/setup"
 	"server/udp"
 	"server/web"
 	"sync"
+	"time"
 )
-
-// TODO : Tambahin script buat ngeset CRON job yg ngebackup db + ngeclear kepemilikan key kalo semua access rule udh kadaluarsa
-// TODO : Tambahin fitur search di select field personel/key/location di halaman2 admin panel (optional bgt)
-// TODO : Tambahin script buat uninstall / update (optional bgt)
 
 func main() {
 	setup.Env()
 	setup.Database()
 	setup.ChannelServer()
+	args := os.Args
 
-	wg := new(sync.WaitGroup)
-	wg.Add(2)
+	if len(args) == 1 {
+		wg := new(sync.WaitGroup)
+		wg.Add(2)
 
-	go func() {
-		udp.Run()
-		wg.Done()
-	}()
+		go func() {
+			udp.Run()
+			wg.Done()
+		}()
 
-	go func() {
-		web.Run()
-		wg.Done()
-	}()
+		go func() {
+			web.Run()
+			wg.Done()
+		}()
 
-	wg.Wait()
+		wg.Wait()
+	} else {
+		cmd := args[1]
+		if cmd == "clear_logs" {
+			db := setup.DB
+			now := time.Now()
+
+			db.Delete(&models.AccessLog{}, "timestamp <= ?", now)
+			db.Delete(&models.RSSILog{}, "timestamp <= ?", now)
+		}
+	}
 }
