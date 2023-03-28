@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"server/api/middlewares"
 	"server/api/services"
 	"server/api/utils"
 
@@ -8,7 +9,7 @@ import (
 )
 
 func RegisterDashboardRoutes(app *gin.RouterGroup) {
-	router := app.Group("dashboard")
+	router := app.Group("dashboard", middlewares.Auth())
 
 	router.GET("", func(c *gin.Context) {
 		keyCnt, lockCnt, personelCnt := services.DashboardData()

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"server/api/middlewares"
 	"server/api/services"
 	"server/api/template"
 	"server/api/utils"
@@ -10,7 +11,7 @@ import (
 )
 
 func ResgiterPlanRoutes(app *gin.RouterGroup) {
-	r := app.Group("/plan")
+	r := app.Group("/plan", middlewares.Auth())
 
 	r.GET("", func(c *gin.Context) {
 		keyword := c.Query("keyword")
@@ -126,7 +127,13 @@ func ResgiterPlanRoutes(app *gin.RouterGroup) {
 			return
 		}
 
-		utils.MakeResponseSuccess(c, "ok", nil)
+		data, err := services.GetPlan(planID)
+		if err != nil {
+			utils.ResponseServerError(c, err)
+			return
+		}
+
+		utils.MakeResponseSuccess(c, data, nil)
 	})
 
 	r.PATCH("/:plan_id/lock/:lock_id", func(c *gin.Context) {
@@ -155,7 +162,13 @@ func ResgiterPlanRoutes(app *gin.RouterGroup) {
 			return
 		}
 
-		utils.MakeResponseSuccess(c, "ok", nil)
+		data, err := services.GetPlan(planID)
+		if err != nil {
+			utils.ResponseServerError(c, err)
+			return
+		}
+
+		utils.MakeResponseSuccess(c, data, nil)
 	})
 
 	r.DELETE("/:plan_id/lock/:lock_id", func(c *gin.Context) {

@@ -9,6 +9,7 @@ type Lock struct {
 	Description string  `json:"description"`
 	Status      bool    `json:"status"`
 	PublicKey   string  `json:"public_key,omitempty"`
+	Plan        Plan    `json:"plan,omitempty"`
 	PlanID      uint64  `json:"map_id"`
 	CoordX      float32 `json:"coord_x"`
 	CoordY      float32 `json:"coord_y"`

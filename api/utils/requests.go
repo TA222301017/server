@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"server/api/template"
 	"time"
 
@@ -11,7 +10,6 @@ import (
 func ParseSearchParameter(c *gin.Context) *template.SearchParameter {
 	params := template.SearchParameter{}
 	if err := c.BindQuery(&params); err != nil {
-		fmt.Println(err)
 		return nil
 	}
 

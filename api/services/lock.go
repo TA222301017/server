@@ -19,6 +19,8 @@ func GetLocks(p template.SearchParameter, keyword string, status string) ([]mode
 	var query *gorm.DB
 	if status == "any" {
 		query = db.Where("label LIKE ? OR location LIKE ?", keyword, keyword)
+	} else if status == "unused" {
+		query = db.Where("(label LIKE ? OR location LIKE ?) AND (plan_id = 0 OR plan_id = NULL)", keyword, keyword)
 	} else {
 		query = db.Where("(label LIKE ? OR location LIKE ?) AND status = ?", keyword, keyword, status == "active")
 	}
@@ -33,7 +35,7 @@ func GetLocks(p template.SearchParameter, keyword string, status string) ([]mode
 	}
 
 	var locks []models.Lock
-	if err := query.Order("created_at DESC").Find(&locks).Error; err != nil {
+	if err := query.Preload("Plan").Order("created_at DESC").Find(&locks).Error; err != nil {
 		return nil, nil, err
 	}
 

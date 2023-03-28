@@ -43,6 +43,7 @@ func Database() {
 		&models.RSSILog{},
 		&models.User{},
 		&models.Role{},
+		&models.Plan{},
 		&models.Lock{},
 		&models.Key{},
 	)

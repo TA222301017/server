@@ -2,7 +2,6 @@ package api
 
 import (
 	"server/api/controllers"
-	"server/api/middlewares"
 	"server/api/setup"
 
 	"github.com/gin-gonic/gin"
@@ -17,7 +16,7 @@ func RegisterAPIRoutes(app *gin.Engine) *gin.RouterGroup {
 
 	controllers.RegisterAuthRoutes(api)
 
-	api.Use(middlewares.Auth())
+	// api.Use(middlewares.Auth())
 
 	controllers.RegisterDashboardRoutes(api)
 	controllers.RegisterAccessRoutes(api)
@@ -27,6 +26,7 @@ func RegisterAPIRoutes(app *gin.Engine) *gin.RouterGroup {
 	controllers.RegisterLockRoutes(api)
 	controllers.RegisterAdminRoutes(api)
 	controllers.ResgiterPlanRoutes(api)
+	controllers.RegisterSSERoutes(api)
 
 	return api
 }

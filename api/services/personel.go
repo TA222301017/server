@@ -80,7 +80,7 @@ func GetPersonels(p template.SearchParameter, keyword string, status string) ([]
 	}
 
 	var personels []models.Personel
-	if err := query.Preload("Role").Find(&personels).Error; err != nil {
+	if err := query.Preload("Key").Preload("Role").Find(&personels).Error; err != nil {
 		return nil, nil, err
 	}
 
@@ -103,6 +103,7 @@ func GetPersonels(p template.SearchParameter, keyword string, status string) ([]
 			Description: p.Description,
 			RoleID:      p.RoleID,
 			KeyID:       p.KeyID,
+			Key:         p.Key.Label,
 		})
 	}
 
@@ -113,7 +114,7 @@ func GetPersonel(personelID uint64) (*template.PersonelData, error) {
 	db := setup.DB
 
 	var p models.Personel
-	if err := db.First(&p, personelID).Preload("Role").Error; err != nil {
+	if err := db.Preload("Key").Preload("Role").First(&p, personelID).Error; err != nil {
 		return nil, err
 	}
 
@@ -126,6 +127,7 @@ func GetPersonel(personelID uint64) (*template.PersonelData, error) {
 		Description: p.Description,
 		RoleID:      p.RoleID,
 		KeyID:       p.KeyID,
+		Key:         p.Key.Label,
 	}
 
 	return &data, nil

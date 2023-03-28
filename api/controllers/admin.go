@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"server/api/middlewares"
 	"server/api/services"
 	"server/api/template"
 	"server/api/utils"
@@ -10,7 +11,7 @@ import (
 )
 
 func RegisterAdminRoutes(app *gin.RouterGroup) {
-	r := app.Group("/admin")
+	r := app.Group("/admin", middlewares.Auth())
 
 	r.POST("", func(c *gin.Context) {
 		var body template.CreateAdminRequest

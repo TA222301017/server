@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"server/api/middlewares"
 	"server/api/services"
 	"server/api/template"
 	"server/api/utils"
@@ -10,13 +11,13 @@ import (
 )
 
 func RegisterKeyRoutes(app *gin.RouterGroup) {
-	router := app.Group("/device/key")
+	router := app.Group("/device/key", middlewares.Auth())
 
 	router.GET("", func(c *gin.Context) {
 		params := utils.ParseSearchParameter(c)
 		keyword := c.Query("keyword")
 		status := c.Query("status")
-		notowned := c.GetBool("notowned")
+		notowned := c.Query("notowned") == "true"
 
 		data, pagination, err := services.GetKeys(*params, keyword, status, notowned)
 		if err != nil {

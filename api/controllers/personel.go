@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"server/api/middlewares"
 	"server/api/services"
 	"server/api/template"
 	"server/api/utils"
@@ -10,7 +11,7 @@ import (
 )
 
 func ResgisterPersonelRoutes(app *gin.RouterGroup) {
-	router := app.Group("/personel")
+	router := app.Group("/personel", middlewares.Auth())
 
 	router.GET("/role", func(c *gin.Context) {
 		data := services.GetRoles()

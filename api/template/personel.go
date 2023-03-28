@@ -9,6 +9,7 @@ type PersonelData struct {
 	Role        string `json:"role"`
 	Description string `json:"description"`
 	KeyID       uint64 `json:"key_id"`
+	Key         string `json:"key"`
 }
 
 type AddPersonelRequest struct {

@@ -1,6 +1,8 @@
 package usecases
 
 import (
+	"bytes"
+	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -114,7 +116,9 @@ func LogAccessEvent(p template.BasePacket) (*template.BasePacket, error) {
 
 	accessLog := models.AccessLog{
 		LockID:           lock.ID,
+		Lock:             lock,
 		KeyID:            key.ID,
+		Key:              key,
 		PersonelName:     personel.Name,
 		PersonelIDNumber: personel.IDNumber,
 		Timestamp:        time.Now(),
@@ -124,6 +128,8 @@ func LogAccessEvent(p template.BasePacket) (*template.BasePacket, error) {
 	if err := db.Create(&accessLog).Error; err != nil {
 		return nil, err
 	}
+
+	gsetup.Channel.AccessMessage <- &accessLog
 
 	return utils.MakePacket(template.LogAccessEvent, p.Data, setup.PrivateKey)
 }
@@ -138,7 +144,7 @@ func LogRSSIEvent(p template.BasePacket) (*template.BasePacket, error) {
 
 	lockID := strings.ToUpper(hex.EncodeToString(p.Data[:16]))
 	keyID := strings.ToUpper(hex.EncodeToString(p.Data[16:32]))
-	rssi := int(p.Data[32])
+	rssi, _ := binary.ReadVarint(bytes.NewBuffer(p.Data[32:33]))
 
 	var lock models.Lock
 	if err := db.First(&lock, "lock_id = ?", lockID).Error; err != nil {
@@ -162,16 +168,21 @@ func LogRSSIEvent(p template.BasePacket) (*template.BasePacket, error) {
 	}
 
 	rssiLog := models.RSSILog{
-		RSSI:       rssi,
+		RSSI:       int(rssi),
 		PersonelID: personel.ID,
+		Personel:   personel,
 		LockID:     lock.ID,
+		Lock:       lock,
 		KeyID:      key.ID,
+		Key:        key,
 		Timestamp:  time.Now(),
 	}
 
 	if err := db.Create(&rssiLog).Error; err != nil {
 		return nil, err
 	}
+
+	gsetup.Channel.RSSIMessage <- &rssiLog
 
 	return utils.MakePacket(template.LogRSSIEvent, p.Data, setup.PrivateKey)
 }
@@ -183,14 +194,18 @@ func RequestHealthcheck(lock *models.Lock) (*template.BasePacket, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	pubKey, err := utils.ParseECDSAPublickKey(temp)
 	if err != nil {
 		return nil, err
 	}
 
-	lockID, _ := hex.DecodeString(lock.LockID)
-	data = append(lockID, temp...)
+	lockID, err := hex.DecodeString(lock.LockID)
+	if err != nil {
+		return nil, err
+	}
 
+	data = append(lockID, temp...)
 	packet, err := utils.MakePacket(template.LogHealthcheckEvent, data, setup.PrivateKey)
 	if err != nil {
 		return nil, err

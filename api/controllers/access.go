@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"errors"
-	"fmt"
+	"server/api/middlewares"
 	"server/api/services"
 	"server/api/template"
 	"server/api/utils"
@@ -12,12 +12,11 @@ import (
 )
 
 func RegisterAccessRoutes(app *gin.RouterGroup) {
-	router := app.Group("/access")
+	router := app.Group("/access", middlewares.Auth())
 
 	router.GET("", func(c *gin.Context) {
 		params := utils.ParseSearchParameter(c)
 		keyword := c.Query("keyword")
-		fmt.Println(keyword)
 
 		data, pagination, err := services.GetAccessRules(*params, keyword)
 		if err != nil {

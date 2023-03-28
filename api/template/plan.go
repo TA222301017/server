@@ -1,9 +1,17 @@
 package template
 
 import (
+	"bytes"
 	"encoding/base64"
 	"errors"
+	"fmt"
+	"image"
+	"image/gif"
+	"image/jpeg"
+	"image/png"
+	"os"
 	"server/models"
+	"strings"
 )
 
 type PlanData struct {
@@ -47,16 +55,91 @@ func (r CreatePlanRequest) Validate() error {
 	return nil
 }
 
-func (r *CreatePlanRequest) LoadImage() error {
-	r.Image = make([]byte, base64.StdEncoding.DecodedLen(len(r.ImageBase64)))
-	n, err := base64.StdEncoding.Decode(r.Image, []byte(r.ImageBase64))
+func (r *CreatePlanRequest) SaveImage() (string, image.Image, error) {
+	var (
+		filename string = strings.ReplaceAll(strings.ToLower(r.Name), " ", "-")
+		img      image.Image
+	)
+	mimeType := strings.Split(r.ImageBase64, ";")[0]
+	base64Data := strings.Split(r.ImageBase64, ",")[1]
+
+	imageData, err := base64.StdEncoding.DecodeString(base64Data)
 	if err != nil {
-		return err
+		return "", nil, err
+	}
+	reader := bytes.NewReader(imageData)
+
+	switch mimeType[5:] {
+	case "image/png":
+		filename = fmt.Sprintf("%s.png", filename)
+		f, err := os.Create(fmt.Sprintf("plans/%s", filename))
+		if err != nil {
+			return "", nil, err
+		}
+		defer f.Close()
+
+		img, err = png.Decode(reader)
+		if err != nil {
+			return "", nil, err
+		}
+
+		if err := png.Encode(f, img); err != nil {
+			return "", nil, err
+		}
+	case "image/jpeg":
+		filename = fmt.Sprintf("%s.jpeg", filename)
+		f, err := os.Create(fmt.Sprintf("plans/%s", filename))
+		if err != nil {
+			return "", nil, err
+		}
+		defer f.Close()
+
+		img, err = jpeg.Decode(reader)
+		if err != nil {
+			return "", nil, err
+		}
+
+		if err := jpeg.Encode(f, img, nil); err != nil {
+			return "", nil, err
+		}
+	case "image/jpg":
+		filename = fmt.Sprintf("%s.jpg", filename)
+		f, err := os.Create(fmt.Sprintf("plans/%s", filename))
+		if err != nil {
+			return "", nil, err
+		}
+		defer f.Close()
+
+		img, err = jpeg.Decode(reader)
+		if err != nil {
+			return "", nil, err
+		}
+
+		if err := jpeg.Encode(f, img, nil); err != nil {
+			return "", nil, err
+		}
+	case "image/gif":
+		filename = fmt.Sprintf("%s.gif", filename)
+		f, err := os.Create(fmt.Sprintf("plans/%s", filename))
+		if err != nil {
+			return "", nil, err
+		}
+		defer f.Close()
+
+		img, err = gif.Decode(reader)
+		if err != nil {
+			return "", nil, err
+		}
+
+		options := &gif.Options{NumColors: 256, Quantizer: nil, Drawer: nil}
+		if err := gif.Encode(f, img, options); err != nil {
+			return "", nil, err
+		}
+	default:
+		return "", nil, errors.New("unsupported mime type")
 	}
 
-	r.Image = r.Image[:n]
-
-	return nil
+	return filename, img, nil
 }
 
 func (r AddLockToPlanRequest) Validate() error {

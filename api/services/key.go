@@ -39,7 +39,7 @@ func GetKeys(p template.SearchParameter, keyword string, status string, notOwned
 		LEFT JOIN personels
 		ON keys.id = personels.key_id
 		WHERE
-			personels.id NOT IN ? AND 
+			keys.id NOT IN ? AND 
 			(
 				keys.label LIKE ? OR
 				keys.key_id LIKE ? OR
@@ -47,7 +47,7 @@ func GetKeys(p template.SearchParameter, keyword string, status string, notOwned
 			)`
 		if err := db.Raw(
 			fmt.Sprintf("SELECT COUNT(*) AS cnt FROM ( %s ) AS t", queryString),
-			keyword, keyword, keyword).
+			ids, keyword, keyword, keyword).
 			Scan(&cnt).Error; err != nil {
 			return nil, nil, err
 		}
@@ -55,14 +55,14 @@ func GetKeys(p template.SearchParameter, keyword string, status string, notOwned
 		if p.Limit < 0 {
 			if err := db.Raw(
 				fmt.Sprintf("%s ORDER BY keys.created_at DESC", queryString),
-				keyword, keyword, keyword).
+				ids, keyword, keyword, keyword).
 				Scan(&keys).Error; err != nil {
 				return nil, nil, err
 			}
 		} else {
 			if err := db.Raw(
 				fmt.Sprintf("%s ORDER BY keys.created_at DESC OFFSET ? LIMIT ?", queryString),
-				keyword, keyword, keyword, offset, limit).
+				ids, keyword, keyword, keyword, offset, limit).
 				Scan(&keys).Error; err != nil {
 				return nil, nil, err
 			}

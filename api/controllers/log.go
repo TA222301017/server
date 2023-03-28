@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"server/api/middlewares"
 	"server/api/services"
 	"server/api/utils"
 
@@ -8,7 +9,7 @@ import (
 )
 
 func RegisterLogRoutes(app *gin.RouterGroup) {
-	router := app.Group("/log")
+	router := app.Group("/log", middlewares.Auth())
 
 	router.GET("/access", func(c *gin.Context) {
 		params := utils.ParseSearchParameter(c)

@@ -1,11 +1,13 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"server/api/template"
 	"server/models"
 	"server/setup"
 	"server/udp/usecases"
+	"strings"
 	"sync"
 	"time"
 
@@ -39,14 +41,14 @@ func GetAccessLog(p template.SearchParameter, location string, personel string) 
 	if p.Limit < 0 {
 		if err := query.
 			Preload("Lock").Preload("Key").
-			Find(&logs).Error; err != nil {
+			Order("created_at DESC").Find(&logs).Error; err != nil {
 			return nil, nil, err
 		}
 	} else {
 		if err := query.
 			Limit(limit).Offset(offset).
 			Preload("Lock").Preload("Key").
-			Find(&logs).Error; err != nil {
+			Order("created_at DESC").Find(&logs).Error; err != nil {
 			return nil, nil, err
 		}
 	}
@@ -99,10 +101,11 @@ func GetRSSILog(p *template.SearchParameter, keyword string) ([]template.RSSILog
 		LEFT JOIN locks ON rssi_logs.lock_id = locks.id
 		LEFT JOIN keys ON rssi_logs.key_id = keys.id
 	WHERE
-		rssi_logs.timestamp BETWEEN ? AND ? OR
-		personels.name LIKE ? OR 
-		locks.label LIKE ? OR 
-		keys.label LIKE ?`
+		rssi_logs.timestamp BETWEEN ? AND ? AND (
+			personels.name LIKE ? OR 
+			locks.label LIKE ? OR 
+			keys.label LIKE ?
+		)`
 
 	if err := db.Raw(
 		fmt.Sprintf("SELECT COUNT(*) AS cnt FROM ( %s ) AS t", queryString),
@@ -302,4 +305,44 @@ func CheckLock(lockID uint64) (*models.HealthcheckLog, error) {
 	}
 
 	return &status, nil
+}
+
+func MatchRSSILogEvent(data *models.RSSILog, keyword string) (*template.RSSILogData, error) {
+	if strings.Contains(data.Personel.Name, keyword) ||
+		strings.Contains(data.Lock.Label, keyword) ||
+		strings.Contains(data.Key.Label, keyword) {
+		return &template.RSSILogData{
+			Timestamp:  data.Timestamp,
+			PersonelID: data.PersonelID,
+			Personel:   data.Personel.Name,
+			LockID:     data.LockID,
+			Lock:       data.Lock.Label,
+			KeyID:      data.KeyID,
+			Key:        data.Key.Label,
+			Location:   data.Lock.Location,
+			RSSI:       data.RSSI,
+		}, nil
+	}
+
+	return nil, errors.New("this event doesnt match with the keyword")
+}
+
+func MatchAccessLogEvent(data *models.AccessLog, keyword string) (*template.AccessLogData, error) {
+	if strings.Contains(data.PersonelName, keyword) ||
+		strings.Contains(data.Lock.Label, keyword) ||
+		strings.Contains(data.Key.Label, keyword) {
+		return &template.AccessLogData{
+			ID:         data.ID,
+			Timestamp:  data.Timestamp,
+			PersonelID: 0, // TODO : BENERIN JADI PAKE ID BENERAN
+			Personel:   data.PersonelName,
+			LockID:     data.LockID,
+			Lock:       data.Lock.Label,
+			KeyID:      data.KeyID,
+			Key:        data.Key.Label,
+			Location:   data.Lock.Location,
+		}, nil
+	}
+
+	return nil, errors.New("this event doesnt match with the keyword")
 }

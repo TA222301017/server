@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"server/api/middlewares"
 	"server/api/services"
 	"server/api/template"
 	"server/api/utils"
@@ -10,7 +11,7 @@ import (
 )
 
 func RegisterLockRoutes(app *gin.RouterGroup) {
-	router := app.Group("/device/lock")
+	router := app.Group("/device/lock", middlewares.Auth())
 
 	router.GET("", func(c *gin.Context) {
 		params := utils.ParseSearchParameter(c)

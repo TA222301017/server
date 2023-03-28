@@ -7,6 +7,7 @@ import (
 	"server/api/template"
 	"server/models"
 	"server/setup"
+	"strings"
 )
 
 func GetPlans(p template.SearchParameter, keyword string) ([]models.Plan, *template.Pagination, error) {
@@ -17,14 +18,15 @@ func GetPlans(p template.SearchParameter, keyword string) ([]models.Plan, *templ
 	keyword = "%" + keyword + "%"
 
 	var cnt int64
-	if err := db.Find(&models.Plan{}).Where("created_at BETWEEN ? AND ? AND name LIKE ?", p.StartDate, p.EndDate, keyword).
-		Count(&cnt).Error; err != nil {
+	if err := db.Where("name LIKE ?", keyword).
+		Find(&models.Plan{}).Count(&cnt).Error; err != nil {
 		return nil, nil, err
 	}
 
 	var plans []models.Plan
-	if err := db.Find(&plans).Where("created_at BETWEEN ? AND ? AND name LIKE ?", p.StartDate, p.EndDate, keyword).
-		Offset(offset).Limit(limit).Error; err != nil {
+	if err := db.
+		Where("name LIKE ?", keyword).Order("created_at DESC").
+		Offset(offset).Limit(limit).Find(&plans).Error; err != nil {
 		return nil, nil, err
 	}
 
@@ -47,12 +49,20 @@ func GetPlan(planID uint64) (*template.PlanData, error) {
 		return nil, err
 	}
 
+	var locks []models.Lock = make([]models.Lock, 0)
+	if err := db.Order("created_at DESC").Find(&locks, "plan_id = ?", planID).Error; err != nil {
+		return nil, err
+	}
+
 	data := template.PlanData{
-		ID:       plan.ID,
-		Name:     plan.Name,
-		Width:    plan.Width,
-		Height:   plan.Height,
-		ImageURL: plan.ImageURL,
+		ID:          plan.ID,
+		Name:        plan.Name,
+		Width:       plan.Width,
+		Height:      plan.Height,
+		ImageURL:    plan.ImageURL,
+		ImageHeight: plan.ImageHeight,
+		ImageWidth:  plan.ImageWidth,
+		Locks:       locks,
 	}
 
 	return &data, nil
@@ -61,29 +71,18 @@ func GetPlan(planID uint64) (*template.PlanData, error) {
 func CreatePlan(r template.CreatePlanRequest) (*models.Plan, error) {
 	db := setup.DB
 
-	if err := r.LoadImage(); err != nil {
-		return nil, err
-	}
-
-	f, err := os.Create(fmt.Sprintf("plans/%s.png", r.Name))
+	filename, img, err := r.SaveImage()
 	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	if _, err := f.Write(r.Image); err != nil {
-		return nil, err
-	}
-
-	if err := f.Sync(); err != nil {
 		return nil, err
 	}
 
 	plan := models.Plan{
-		Name:     r.Name,
-		Width:    r.Width,
-		Height:   r.Height,
-		ImageURL: fmt.Sprintf("/api/plan/images/%s.png", r.Name),
+		Name:        r.Name,
+		Width:       r.Width,
+		Height:      r.Height,
+		ImageWidth:  img.Bounds().Size().X,
+		ImageHeight: img.Bounds().Size().Y,
+		ImageURL:    fmt.Sprintf("/api/plan/images/%s", filename),
 	}
 
 	if err := db.Create(&plan).Error; err != nil {
@@ -114,25 +113,15 @@ func EditPlan(r template.CreatePlanRequest, planID uint64) (*models.Plan, error)
 	}
 
 	if r.ImageBase64 != "" {
-		if err := r.LoadImage(); err != nil {
-			return nil, err
-		}
-
-		f, err := os.Create(fmt.Sprintf("plans/%s.png", plan.Name))
+		r.Name = plan.Name
+		filename, img, err := r.SaveImage()
 		if err != nil {
 			return nil, err
 		}
-		defer f.Close()
 
-		if _, err := f.Write(r.Image); err != nil {
-			return nil, err
-		}
-
-		if err := f.Sync(); err != nil {
-			return nil, err
-		}
-
-		plan.ImageURL = fmt.Sprintf("plans/%s.png", plan.Name)
+		plan.ImageURL = fmt.Sprintf("/api/plan/images/%s", filename)
+		plan.ImageWidth = img.Bounds().Size().X
+		plan.ImageHeight = img.Bounds().Size().Y
 	}
 
 	if err := db.Save(&plan).Error; err != nil {
@@ -155,7 +144,9 @@ func DeletePlan(planID uint64) error {
 	}
 
 	db.Delete(&plan)
-	os.Remove(fmt.Sprintf("plans/%s.png", plan.Name))
+
+	temp := strings.Split(plan.ImageURL, "/")
+	os.Remove(fmt.Sprintf("plans/%s", temp[len(temp)-1]))
 
 	return nil
 }
