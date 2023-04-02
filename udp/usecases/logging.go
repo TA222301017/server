@@ -1,8 +1,6 @@
 package usecases
 
 import (
-	"bytes"
-	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"fmt"
