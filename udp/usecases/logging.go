@@ -144,7 +144,7 @@ func LogRSSIEvent(p template.BasePacket) (*template.BasePacket, error) {
 
 	lockID := strings.ToUpper(hex.EncodeToString(p.Data[:16]))
 	keyID := strings.ToUpper(hex.EncodeToString(p.Data[16:32]))
-	rssi, _ := binary.ReadVarint(bytes.NewBuffer(p.Data[32:33]))
+	rssi := int(int8(p.Data[32]))
 
 	var lock models.Lock
 	if err := db.First(&lock, "lock_id = ?", lockID).Error; err != nil {
