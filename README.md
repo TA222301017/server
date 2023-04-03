@@ -33,7 +33,7 @@ server
 |   ├───template
 |   ├───usecases
 |   └───utils
-├───web (source code untuk web server)
+├───web (source code untuk static file server)
 ├───main.go
 ├───Makefile
 └───.env
