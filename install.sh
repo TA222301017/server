@@ -25,6 +25,8 @@ ADMIN_PANEL_TAG=$(curl --silent "https://api.github.com/repos/$ADMIN_PANEL_REPO/
     grep '"tag_name":' |                                            
     sed -E 's/.*"([^"]+)".*/\1/')
 
+echo "Fetching scripts..."
+curl https://raw.githubusercontent.com/TA222301017/server/main/install.sh > install.sh
 
 echo "Determining machine architecture..."
 if [ $ARCH == "x86_64" ] 

@@ -70,7 +70,7 @@ $ make clean
 Rilis terbaru program ini beserta rilis terbaru [Admin Panel](https://github.com/TA222301017/admin-panel-js) untuk program ini dapat di-install pada sebuah komputer linux dengan perintah berikut.
 
 ```shell
-$ wget https://raw.githubusercontent.com/TA222301017/server/main/install.sh -O install.sh && source ./install.sh
+$ curl https://raw.githubusercontent.com/TA222301017/server/main/install.sh > install.sh && source ./install.sh
 ```
 
 Pastikan Anda sudah membuat file `.env` seperti pada file `.env.example` sebelum melakukan instalasi.
