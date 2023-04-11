@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -42,15 +43,14 @@ func KeyExchange(p template.BasePacket, addr *net.UDPAddr) (*template.BasePacket
 	serverPubKeyBytes := utils.MarshalECDSAPublicKey(setup.PublicKey)
 
 	var lock models.Lock
-	var cnt int64
-	if err := db.First(&lock, "lock_id = ?", lockID).Count(&cnt).Error; err != nil {
+	if err := db.First(&lock, "lock_id = ?", lockID).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, err
 		}
 	}
 
-	if cnt == 0 {
-		lock := models.Lock{
+	if lock.ID == 0 {
+		lock = models.Lock{
 			LockID:    lockID,
 			IpAddress: addr.IP.String(),
 			Label:     fmt.Sprintf("Lock on %s", addr.IP.String()),
@@ -62,20 +62,22 @@ func KeyExchange(p template.BasePacket, addr *net.UDPAddr) (*template.BasePacket
 			return nil, err
 		}
 	} else {
-		lock := models.Lock{
-			IpAddress: addr.IP.String(),
-			PublicKey: hex.EncodeToString(p.Data[16:pLen]),
-			Status:    true,
-		}
+		lock.IpAddress = addr.IP.String()
+		lock.PublicKey = hex.EncodeToString(p.Data[16:pLen])
+		lock.Status = true
 
 		if err := db.Save(&lock).Error; err != nil {
 			return nil, err
 		}
 	}
 
+	t := time.Now().Unix()
+	timestamp := make([]byte, 8)
+	binary.BigEndian.PutUint64(timestamp, uint64(t))
+
 	return utils.MakePacket(
 		template.KeyExchange,
-		append(p.Data[:16], serverPubKeyBytes...),
+		append(timestamp, append(p.Data[:16], serverPubKeyBytes...)...),
 		setup.PrivateKey,
 	)
 }

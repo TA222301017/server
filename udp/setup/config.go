@@ -15,7 +15,7 @@ func Config() (buffLen int, workerNum int) {
 
 	workerNum, err = strconv.Atoi(os.Getenv("UDP_WORKER_NUM"))
 	if err != nil {
-		workerNum = 3
+		workerNum = 10
 	}
 
 	return buffLen, workerNum

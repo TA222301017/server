@@ -1,9 +1,14 @@
 package udp
 
 import (
+	"fmt"
 	"log"
 	"net"
+	"time"
 
+	"server/api/services"
+	"server/models"
+	gsetup "server/setup"
 	"server/udp/setup"
 	"server/udp/template"
 	"server/udp/usecases"
@@ -15,7 +20,7 @@ type Request struct {
 	RemoteAddr *net.UDPAddr
 }
 
-func handlePacket(conn *net.UDPConn, request <-chan *Request) {
+func incomingPacketHandler(conn *net.UDPConn, request <-chan *Request) {
 	var (
 		res *template.BasePacket
 		err error
@@ -42,6 +47,7 @@ func handlePacket(conn *net.UDPConn, request <-chan *Request) {
 
 		default:
 			log.Printf("| unknown op code, echoing packet data\n")
+			fmt.Println(r.Packet.OpCode)
 			res, err = utils.MakePacket(r.Packet.OpCode, r.Packet.Data, setup.PrivateKey)
 		}
 
@@ -52,6 +58,22 @@ func handlePacket(conn *net.UDPConn, request <-chan *Request) {
 		if err != nil {
 			log.Printf("| %s\n", err)
 		}
+	}
+}
+
+func scanOutdatedAccessRules() {
+	db := gsetup.DB
+
+	var accessRules []models.AccessRule
+
+	for {
+		db.Find(&accessRules).Where("ends_at >= ?", time.Now())
+
+		for _, accessRule := range accessRules {
+			services.DeleteAccessRule(accessRule.ID)
+		}
+
+		time.Sleep(5 * time.Minute)
 	}
 }
 
@@ -71,8 +93,10 @@ func Run() {
 	}
 	defer conn.Close()
 
+	go scanOutdatedAccessRules()
+
 	for i := 0; i < workerNum; i++ {
-		go handlePacket(conn, requestsChannel)
+		go incomingPacketHandler(conn, requestsChannel)
 	}
 
 	for {

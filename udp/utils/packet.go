@@ -8,9 +8,11 @@ import (
 	"server/udp/template"
 )
 
+const SIGNATURE_LEN = 64
+
 func PadSignature(sig []byte) []byte {
 	t := []byte{}
-	for i := len(sig); i < 64; i++ {
+	for i := len(sig); i < SIGNATURE_LEN; i++ {
 		t = append(t, 0x00)
 	}
 	return append(t, sig...)
@@ -55,20 +57,20 @@ func ParsePacket(pBytes []byte, pLen int) (*template.BasePacket, error) {
 
 	return &template.BasePacket{
 		OpCode:    pBytes[0],
-		Data:      pBytes[1 : pLen-64],
-		Signature: pBytes[pLen-64:],
+		Data:      pBytes[1 : pLen-SIGNATURE_LEN],
+		Signature: pBytes[pLen-SIGNATURE_LEN:],
 	}, nil
 }
 
 func VerifyPacket(packet []byte, pk *ecdsa.PublicKey) error {
 	packetLen := len(packet)
 
-	if packetLen < 64 {
+	if packetLen < SIGNATURE_LEN {
 		return errors.New("packet too short")
 	}
 
-	signature := packet[packetLen-64:]
-	temp := packet[:packetLen-64]
+	signature := packet[packetLen-SIGNATURE_LEN:]
+	temp := packet[:packetLen-SIGNATURE_LEN]
 
 	hash := sha256.Sum256(temp)
 	if ecdsa.VerifyASN1(pk, hash[:], TrimSignature(signature)) {
