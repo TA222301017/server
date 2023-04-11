@@ -8,6 +8,7 @@ const (
 	LogAccessEvent
 	LogRSSIEvent
 	LogHealthcheckEvent
+	SyncAccessRules
 )
 
 type BasePacket struct {
