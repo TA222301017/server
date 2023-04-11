@@ -99,19 +99,21 @@ func SyncAccessRules(p template.BasePacket, addr *net.UDPAddr) (*template.BasePa
 		serverAccessRulesMap[serverAccessRules[i].ID] = false
 	}
 
-	for i = 0; i < p.Data[16]; i++ {
-		if _, exists := serverAccessRulesMap[lockAccessRuleIds[i]]; !exists {
-			DeleteAccessRule(lockAccessRuleIds[i], lock.IpAddress)
+	go func() {
+		for i = 0; i < p.Data[16]; i++ {
+			if _, exists := serverAccessRulesMap[lockAccessRuleIds[i]]; !exists {
+				DeleteAccessRule(lockAccessRuleIds[i], lock.IpAddress)
+			}
 		}
-	}
 
-	for i := 0; i < len(serverAccessRules); i++ {
-		if _, exists := lockAccessRuleMap[serverAccessRules[i].ID]; !exists {
-			var key models.Key
-			db.First(&key, serverAccessRules[i].KeyID)
-			AddAccessRule(serverAccessRules[i], lock, key)
+		for i := 0; i < len(serverAccessRules); i++ {
+			if _, exists := lockAccessRuleMap[serverAccessRules[i].ID]; !exists {
+				var key models.Key
+				db.First(&key, serverAccessRules[i].KeyID)
+				AddAccessRule(serverAccessRules[i], lock, key)
+			}
 		}
-	}
+	}()
 
 	var responseData []byte
 	responseData = append(responseData, byte(len(serverAccessRules)))
