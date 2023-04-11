@@ -116,7 +116,7 @@ func SyncAccessRules(p template.BasePacket, addr *net.UDPAddr) (*template.BasePa
 	var responseData []byte
 	responseData = append(responseData, byte(len(serverAccessRules)))
 	for _, accessRule := range serverAccessRules {
-		binary.BigEndian.PutUint64(responseData, accessRule.ID)
+		responseData = binary.BigEndian.AppendUint64(responseData, accessRule.ID)
 	}
 
 	return utils.MakePacket(
