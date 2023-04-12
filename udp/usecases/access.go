@@ -87,19 +87,17 @@ func SyncAccessRules(p template.BasePacket, addr *net.UDPAddr) (*template.BasePa
 	var i byte
 	lockAccessRuleIds := make([]uint64, 0)
 	lockAccessRuleMap := make(map[uint64]bool, p.Data[16])
-	fmt.Println(p.Data)
+	fmt.Println(strings.ToUpper(hex.EncodeToString(p.Data)))
 	for i = 0; i < p.Data[16]; i++ {
 		id := binary.BigEndian.Uint64(p.Data[i*8+17 : i*8+25])
 		lockAccessRuleIds = append(lockAccessRuleIds, id)
 		lockAccessRuleMap[id] = false
-		fmt.Println("from lock   :", id)
 	}
 
 	serverAccessRules := []models.AccessRule{}
 	serverAccessRulesMap := make(map[uint64]bool, 0)
 	db.Find(&serverAccessRules).Where("lock_id = ? AND ends_at <= ?", lockID, time.Now())
 	for i := 0; i < (len(serverAccessRules)); i++ {
-		fmt.Println("from server :", serverAccessRules[i].ID)
 		serverAccessRulesMap[serverAccessRules[i].ID] = false
 	}
 

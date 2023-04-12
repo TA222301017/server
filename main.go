@@ -17,7 +17,7 @@ func main() {
 	setup.ChannelServer()
 
 	s := gocron.NewScheduler(time.UTC)
-	s.Every(5).Days().Do(func() {
+	s.Every(2).Days().Do(func() {
 		db := setup.DB
 		now := time.Now()
 
