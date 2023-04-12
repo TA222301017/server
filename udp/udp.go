@@ -1,7 +1,6 @@
 package udp
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"time"
@@ -45,9 +44,12 @@ func incomingPacketHandler(conn *net.UDPConn, request <-chan *Request) {
 			log.Printf("| UNIMPLEMENTED!\n")
 			res, err = utils.MakePacket(r.Packet.OpCode, r.Packet.Data, setup.PrivateKey)
 
+		case template.SyncAccessRules:
+			log.Printf("| 0x%x | SYNC ACCESS RULES\n", r.Packet.OpCode)
+			res, err = usecases.SyncAccessRules(*r.Packet, r.RemoteAddr)
+
 		default:
 			log.Printf("| unknown op code, echoing packet data\n")
-			fmt.Println(r.Packet.OpCode)
 			res, err = utils.MakePacket(r.Packet.OpCode, r.Packet.Data, setup.PrivateKey)
 		}
 

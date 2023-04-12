@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"math/rand"
 	"server/api/middlewares"
@@ -29,8 +28,6 @@ func RegisterSSERoutes(app *gin.RouterGroup) {
 			delete(setup.Channel.SSETokens, token)
 		}()
 
-		fmt.Println(setup.Channel.SSETokens)
-
 		utils.MakeResponseSuccess(c, token, nil)
 	})
 
@@ -38,13 +35,11 @@ func RegisterSSERoutes(app *gin.RouterGroup) {
 		keyword := c.Query("keyword")
 		token, err := strconv.ParseUint(c.Query("token"), 10, 32)
 		if err != nil {
-			fmt.Println(err)
 			utils.ResponseBadRequest(c, err)
 			return
 		}
 
 		if _, ok := setup.Channel.SSETokens[uint32(token)]; !ok {
-			fmt.Println("GAADA AJG")
 			utils.ResponseBadRequest(c, errors.New("invalid token"))
 			return
 		} else {
@@ -81,13 +76,11 @@ func RegisterSSERoutes(app *gin.RouterGroup) {
 		keyword := c.Query("keyword")
 		token, err := strconv.ParseUint(c.Query("token"), 10, 32)
 		if err != nil {
-			fmt.Println(err)
 			utils.ResponseBadRequest(c, err)
 			return
 		}
 
 		if _, ok := setup.Channel.SSETokens[uint32(token)]; !ok {
-			fmt.Println("GAADA AJG")
 			utils.ResponseBadRequest(c, errors.New("invalid token"))
 			return
 		} else {
