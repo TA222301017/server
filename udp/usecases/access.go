@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"net"
 	"server/models"
 	gsetup "server/setup"
@@ -87,7 +86,6 @@ func SyncAccessRules(p template.BasePacket, addr *net.UDPAddr) (*template.BasePa
 	var i byte
 	lockAccessRuleIds := make([]uint64, 0)
 	lockAccessRuleMap := make(map[uint64]bool, p.Data[16])
-	fmt.Println(strings.ToUpper(hex.EncodeToString(p.Data)))
 	for i = 0; i < p.Data[16]; i++ {
 		id := binary.BigEndian.Uint64(p.Data[i*8+17 : i*8+25])
 		lockAccessRuleIds = append(lockAccessRuleIds, id)
@@ -104,7 +102,9 @@ func SyncAccessRules(p template.BasePacket, addr *net.UDPAddr) (*template.BasePa
 	go func() {
 		for i = 0; i < p.Data[16]; i++ {
 			if _, exists := serverAccessRulesMap[lockAccessRuleIds[i]]; !exists {
-				DeleteAccessRule(lockAccessRuleIds[i], lock.IpAddress)
+				if _, err := DeleteAccessRule(lockAccessRuleIds[i], lock.IpAddress); err == nil {
+					db.Delete(&models.AccessRule{}, lockAccessRuleIds[i])
+				}
 			}
 		}
 

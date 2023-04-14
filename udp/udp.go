@@ -3,11 +3,7 @@ package udp
 import (
 	"log"
 	"net"
-	"time"
 
-	"server/api/services"
-	"server/models"
-	gsetup "server/setup"
 	"server/udp/setup"
 	"server/udp/template"
 	"server/udp/usecases"
@@ -63,22 +59,6 @@ func incomingPacketHandler(conn *net.UDPConn, request <-chan *Request) {
 	}
 }
 
-func scanOutdatedAccessRules() {
-	db := gsetup.DB
-
-	var accessRules []models.AccessRule
-
-	for {
-		db.Find(&accessRules).Where("ends_at >= ?", time.Now())
-
-		for _, accessRule := range accessRules {
-			services.DeleteAccessRule(accessRule.ID)
-		}
-
-		time.Sleep(5 * time.Minute)
-	}
-}
-
 func Run() {
 	setup.Keys()
 	setup.Logger()
@@ -94,8 +74,6 @@ func Run() {
 		log.Fatalf("| + %s\n", err)
 	}
 	defer conn.Close()
-
-	go scanOutdatedAccessRules()
 
 	for i := 0; i < workerNum; i++ {
 		go incomingPacketHandler(conn, requestsChannel)

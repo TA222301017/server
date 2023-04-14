@@ -254,7 +254,6 @@ func main() {
 				}
 
 				accessRuleID := binary.BigEndian.Uint64(packet.Data[:8])
-				fmt.Println(accessRuleID)
 
 				delete(accessRules, accessRuleID)
 				printAccessRules()
