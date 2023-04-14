@@ -83,6 +83,12 @@ func SyncAccessRules(p template.BasePacket, addr *net.UDPAddr) (*template.BasePa
 		return nil, err
 	}
 
+	pubKeyBytes, _ := hex.DecodeString(lock.PublicKey)
+	pubKey, _ := utils.ParseECDSAPublickKey(pubKeyBytes)
+	if err := utils.VerifyPacket(p.Bytes(), pubKey); err != nil {
+		return nil, err
+	}
+
 	var i byte
 	lockAccessRuleIds := make([]uint64, 0)
 	lockAccessRuleMap := make(map[uint64]bool, p.Data[16])

@@ -88,12 +88,16 @@ func GetPersonelAccessRules(p template.SearchParameter, personelID uint64) ([]te
 	limit := p.Limit
 
 	var cnt int64
-	db.Where("personel_id = ?", personelID).Find(&models.AccessRule{}).Count(&cnt)
+	if err := db.Where("personel_id = ?", personelID).Find(&models.AccessRule{}).Count(&cnt).Error; err != nil {
+		fmt.Println(err)
+	}
 
 	var accessRules []models.AccessRule
-	db.Offset(offset).Limit(limit).
+	if err := db.Offset(offset).Limit(limit).
 		Where("personel_id = ?", personelID).
-		Preload("Lock").Preload("Personel").Find(&accessRules)
+		Preload("Lock").Preload("Personel").Find(&accessRules).Error; err != nil {
+		fmt.Println(err)
+	}
 
 	var accessRuleData []template.AccessRuleData
 	for _, a := range accessRules {
