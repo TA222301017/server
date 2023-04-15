@@ -182,6 +182,7 @@ func AddKey(a template.AddKeyRequest) (*models.Key, error) {
 		KeyID:       a.KeyID,
 		Status:      a.Status,
 		Description: a.Description,
+		AESKey:      a.AESKey,
 	}
 
 	if err := db.Create(&key).Error; err != nil {
@@ -205,6 +206,10 @@ func EditKey(e template.EditKeyRequest, keyID uint64) (*models.Key, error) {
 
 	if e.KeyID != "" {
 		key.KeyID = e.KeyID
+	}
+
+	if e.AESKey != "" {
+		key.AESKey = e.KeyID
 	}
 
 	if e.Name != "" {

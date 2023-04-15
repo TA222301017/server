@@ -39,6 +39,45 @@ func RegisterSSERoutes(app *gin.RouterGroup) {
 			return
 		}
 
+		go func() {
+			for i := 0; i < 50; i++ {
+				setup.Channel.RSSIMessage <- &models.RSSILog{
+					PersonelID: 7,
+					RSSI:       -77,
+					LockID:     1,
+					Timestamp:  time.Now(),
+					KeyID:      15,
+					Personel: models.Personel{
+						Name: "Jon",
+					},
+				}
+
+				setup.Channel.RSSIMessage <- &models.RSSILog{
+					PersonelID: 7,
+					RSSI:       -77,
+					LockID:     18,
+					Timestamp:  time.Now(),
+					KeyID:      15,
+					Personel: models.Personel{
+						Name: "Jon",
+					},
+				}
+
+				setup.Channel.RSSIMessage <- &models.RSSILog{
+					PersonelID: 7,
+					RSSI:       -77,
+					LockID:     26,
+					Timestamp:  time.Now(),
+					KeyID:      15,
+					Personel: models.Personel{
+						Name: "Jon",
+					},
+				}
+
+				time.Sleep(2 * time.Second)
+			}
+		}()
+
 		if _, ok := setup.Channel.SSETokens[uint32(token)]; !ok {
 			utils.ResponseBadRequest(c, errors.New("invalid token"))
 			return

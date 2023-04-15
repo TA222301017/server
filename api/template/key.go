@@ -1,6 +1,9 @@
 package template
 
-import "errors"
+import (
+	"encoding/hex"
+	"errors"
+)
 
 type KeyData struct {
 	ID      uint64 `json:"id"`
@@ -16,6 +19,7 @@ type AddKeyRequest struct {
 	KeyID       string `json:"key_id"`
 	Status      bool   `json:"status"`
 	Description string `json:"description"`
+	AESKey      string `json:"aes_key"`
 }
 
 func (a AddKeyRequest) Validate() error {
@@ -31,6 +35,18 @@ func (a AddKeyRequest) Validate() error {
 		return errors.New("key_id must have length of 32 characters")
 	}
 
+	if _, err := hex.DecodeString(a.KeyID); err != nil {
+		return errors.New("key_id is not valid hexadecimal")
+	}
+
+	if len(a.AESKey) != 32 {
+		return errors.New("aes_key must have length of 32 characters")
+	}
+
+	if _, err := hex.DecodeString(a.AESKey); err != nil {
+		return errors.New("aes_key is not valid hexadecimal")
+	}
+
 	return nil
 }
 
@@ -39,11 +55,28 @@ type EditKeyRequest struct {
 	KeyID       string `json:"key_id"`
 	Status      bool   `json:"status"`
 	Description string `json:"description"`
+	AESKey      string `json:"aes_key"`
 }
 
 func (e EditKeyRequest) Validate() error {
-	if len(e.KeyID) != 32 {
-		return errors.New("key_id must have length of 32 characters")
+	if len(e.KeyID) != 0 {
+		if len(e.KeyID) != 32 {
+			return errors.New("key_id must have length of 32 characters")
+		}
+
+		if _, err := hex.DecodeString(e.KeyID); err != nil {
+			return errors.New("key_id is not valid hexadecimal")
+		}
+	}
+
+	if len(e.AESKey) != 0 {
+		if len(e.AESKey) != 32 {
+			return errors.New("aes_key must have length of 32 characters")
+		}
+
+		if _, err := hex.DecodeString(e.AESKey); err != nil {
+			return errors.New("aes_key is not valid hexadecimal")
+		}
 	}
 
 	return nil

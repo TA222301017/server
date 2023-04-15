@@ -19,12 +19,14 @@ import (
 func AddAccessRule(accessRule models.AccessRule, lock models.Lock, key models.Key) (*template.BasePacket, error) {
 	var data []byte = make([]byte, 8)
 
-	lockIDHex, err := hex.DecodeString(lock.LockID)
-	keyIDHex, err := hex.DecodeString(key.KeyID)
+	lockIDHex, _ := hex.DecodeString(lock.LockID)
+	keyIDHex, _ := hex.DecodeString(key.KeyID)
+	aesKeyHex, _ := hex.DecodeString(key.AESKey)
 
 	binary.BigEndian.PutUint64(data, accessRule.ID)
 	data = append(data, lockIDHex...)
 	data = append(data, keyIDHex...)
+	data = append(data, aesKeyHex...)
 	data = binary.BigEndian.AppendUint64(data, uint64(accessRule.StartsAt.Unix()))
 	data = binary.BigEndian.AppendUint64(data, uint64(accessRule.EndsAt.Unix()))
 
@@ -41,10 +43,12 @@ func EditAccessRule(accessRule models.AccessRule, lock models.Lock, key models.K
 
 	lockIDHex, err := hex.DecodeString(lock.LockID)
 	keyIDHex, err := hex.DecodeString(key.KeyID)
+	aesKeyHex, _ := hex.DecodeString(key.AESKey)
 
 	binary.BigEndian.PutUint64(data, accessRule.ID)
 	data = append(data, lockIDHex...)
 	data = append(data, keyIDHex...)
+	data = append(data, aesKeyHex...)
 	data = binary.BigEndian.AppendUint64(data, uint64(accessRule.StartsAt.Unix()))
 	data = binary.BigEndian.AppendUint64(data, uint64(accessRule.EndsAt.Unix()))
 
