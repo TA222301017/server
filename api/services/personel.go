@@ -153,9 +153,9 @@ func EditPersonel(e template.EditPersonelRequest, personelID uint64) (*template.
 			return nil, errors.New("key not found")
 		}
 
-		var p models.Personel
-		if err := db.First(&p, "key_id = ?", e.KeyID).Error; err == nil {
-			if p.ID != 0 {
+		var pTemp models.Personel
+		if err := db.First(&pTemp, "key_id = ?", e.KeyID).Error; err == nil {
+			if pTemp.ID != 0 {
 				return nil, errors.New("key already used")
 			}
 		}
@@ -171,6 +171,8 @@ func EditPersonel(e template.EditPersonelRequest, personelID uint64) (*template.
 				db.Save(&rule)
 			}
 		}
+
+		p.KeyID = e.KeyID
 	} else {
 		if err := db.Preload("Lock").Preload("Key").Find(&rules).Where("personel_id = ?", personelID).Error; err != nil {
 			return nil, err
@@ -183,6 +185,8 @@ func EditPersonel(e template.EditPersonelRequest, personelID uint64) (*template.
 				db.Delete(&rule)
 			}
 		}
+
+		p.KeyID = 0
 	}
 
 	if e.Description != "" {
