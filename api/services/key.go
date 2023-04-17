@@ -209,7 +209,7 @@ func EditKey(e template.EditKeyRequest, keyID uint64) (*models.Key, error) {
 	}
 
 	if e.AESKey != "" {
-		key.AESKey = e.KeyID
+		key.AESKey = e.AESKey
 	}
 
 	if e.Name != "" {
