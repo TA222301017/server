@@ -63,20 +63,20 @@ func GetPersonels(p template.SearchParameter, keyword string, status string) ([]
 	limit := p.Limit
 	keyword = "%" + keyword + "%"
 
-	var query *gorm.DB
+	var query *gorm.DB = db
+	if p.Limit > 0 {
+		query = db.Limit(limit).Offset(offset)
+	}
+
 	if status == "any" {
-		query = db.Where("name LIKE ? OR id_number LIKE ?", keyword, keyword)
+		query = query.Where("name LIKE ? OR id_number LIKE ?", keyword, keyword)
 	} else {
-		query = db.Where("(name LIKE ? OR id_number LIKE ?) AND status = ?", keyword, keyword, status == "active")
+		query = query.Where("(name LIKE ? OR id_number LIKE ?) AND status = ?", keyword, keyword, status == "active")
 	}
 
 	var cnt int64
 	if err := query.Find(&models.Personel{}).Count(&cnt).Error; err != nil {
 		return nil, nil, err
-	}
-
-	if p.Limit < 0 {
-		query = query.Limit(limit).Offset(offset)
 	}
 
 	var personels []models.Personel

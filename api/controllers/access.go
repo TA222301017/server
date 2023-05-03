@@ -54,6 +54,11 @@ func RegisterAccessRoutes(app *gin.RouterGroup) {
 			return
 		}
 
+		if err := body.Validate(); err != nil {
+			utils.ResponseBadRequest(c, err)
+			return
+		}
+
 		data, err := services.AddAccessRule(body, claims.ID)
 		if err != nil {
 			utils.ResponseServerError(c, err)
@@ -80,6 +85,11 @@ func RegisterAccessRoutes(app *gin.RouterGroup) {
 		claims, err := utils.GetClaimsFromContext(c)
 		if err != nil {
 			utils.ResponseUnauthorized(c, err)
+			return
+		}
+
+		if err := body.Validate(); err != nil {
+			utils.ResponseBadRequest(c, err)
 			return
 		}
 

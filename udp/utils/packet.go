@@ -69,6 +69,10 @@ func VerifyPacket(packet []byte, pk *ecdsa.PublicKey) error {
 		return errors.New("packet too short")
 	}
 
+	if pk == nil {
+		return errors.New("invalid public key")
+	}
+
 	signature := packet[packetLen-SIGNATURE_LEN:]
 	temp := packet[:packetLen-SIGNATURE_LEN]
 

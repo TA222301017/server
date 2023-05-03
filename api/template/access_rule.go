@@ -29,6 +29,10 @@ func (a AddAccessRule) Validate() error {
 		return errors.New("ends_at must not be empty")
 	}
 
+	if a.EndsAt.Unix() < a.StartsAt.Unix() {
+		return errors.New("ends_at must be after starts_at")
+	}
+
 	return nil
 }
 
@@ -36,6 +40,26 @@ type EditAccessRule struct {
 	LockID   uint64    `json:"lock_id"`
 	StartsAt time.Time `json:"starts_at"`
 	EndsAt   time.Time `json:"ends_at"`
+}
+
+func (e EditAccessRule) Validate() error {
+	if e.LockID == 0 {
+		return errors.New("lock_id must not be emtpy")
+	}
+
+	if e.StartsAt.Unix() == 0 {
+		return errors.New("starts_at must not be empty")
+	}
+
+	if e.EndsAt.Unix() == 0 {
+		return errors.New("ends_at must not be empty")
+	}
+
+	if e.EndsAt.Unix() < e.StartsAt.Unix() {
+		return errors.New("ends_at must be after starts_at")
+	}
+
+	return nil
 }
 
 type AccessRuleData struct {
