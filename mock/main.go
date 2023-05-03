@@ -13,6 +13,7 @@ import (
 	"os"
 	"server/udp/template"
 	"server/udp/utils"
+	"strings"
 	"time"
 )
 
@@ -83,6 +84,7 @@ func main() {
 			return
 		}
 
+		fmt.Println("Packet:", strings.ToUpper(hex.EncodeToString(packet.Bytes())))
 		res, err := utils.SendUDPPacket(packet, "127.0.0.1", "8888")
 		if err != nil {
 			fmt.Println(err)
@@ -110,6 +112,7 @@ func main() {
 			return
 		}
 
+		fmt.Println("Packet:", strings.ToUpper(hex.EncodeToString(packet.Bytes())))
 		res, err := utils.SendUDPPacket(packet, "127.0.0.1", "8888")
 		if err != nil {
 			fmt.Println(err)
@@ -135,6 +138,7 @@ func main() {
 			return
 		}
 
+		fmt.Println("Packet:", strings.ToUpper(hex.EncodeToString(packet.Bytes())))
 		res, err := utils.SendUDPPacket(packet, "127.0.0.1", "8888")
 		if err != nil {
 			fmt.Println(err)
