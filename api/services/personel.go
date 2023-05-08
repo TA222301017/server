@@ -77,7 +77,7 @@ func GetPersonels(p template.SearchParameter, keyword string, status string) ([]
 	}
 
 	if p.Limit > 0 {
-		query = db.Limit(limit).Offset(offset)
+		query = query.Limit(limit).Offset(offset)
 	}
 
 	var personels []models.Personel

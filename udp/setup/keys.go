@@ -14,10 +14,11 @@ var (
 )
 
 func generateKeys() error {
-	PrivateKey, err := utils.GenerateECDSAKeys()
+	temp, err := utils.GenerateECDSAKeys()
 	if err != nil {
 		return err
 	}
+	PrivateKey = temp
 	PublicKey = &PrivateKey.PublicKey
 
 	if err := utils.SaveECDSAPrivateKey(PrivateKey, "server"); err != nil {

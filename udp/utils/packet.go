@@ -8,7 +8,7 @@ import (
 	"server/udp/template"
 )
 
-const SIGNATURE_LEN = 64
+const SIGNATURE_LEN = 72
 
 func PadSignature(sig []byte) []byte {
 	t := []byte{}
@@ -49,7 +49,7 @@ func MakePacket(opCode byte, data []byte, privKey *ecdsa.PrivateKey) (*template.
 }
 
 func ParsePacket(pBytes []byte, pLen int) (*template.BasePacket, error) {
-	if pLen < 65 {
+	if pLen < SIGNATURE_LEN {
 		return nil, errors.New("packet too short")
 	}
 

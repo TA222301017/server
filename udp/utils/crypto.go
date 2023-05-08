@@ -14,7 +14,7 @@ import (
 )
 
 func GenerateECDSAKeys() (*ecdsa.PrivateKey, error) {
-	privKey, err := ecdsa.GenerateKey(elliptic.P224(), rand.Reader)
+	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func LoadECDSAPublicKey(name string) (*ecdsa.PublicKey, error) {
 
 func SaveECDSAPublicKey(pub *ecdsa.PublicKey, name string) error {
 	filename := fmt.Sprintf("keys/%s_pub.pem", name)
-	pubFile, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	pubFile, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func SaveECDSAPublicKey(pub *ecdsa.PublicKey, name string) error {
 
 func SaveECDSAPrivateKey(priv *ecdsa.PrivateKey, name string) error {
 	filename := fmt.Sprintf("keys/%s_priv.pem", name)
-	privFile, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	privFile, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		return err
 	}
@@ -126,17 +126,17 @@ func SaveECDSAPrivateKey(priv *ecdsa.PrivateKey, name string) error {
 }
 
 func MarshalECDSAPublicKey(pubKey *ecdsa.PublicKey) []byte {
-	return elliptic.Marshal(elliptic.P224(), pubKey.X, pubKey.Y)
+	return elliptic.Marshal(elliptic.P256(), pubKey.X, pubKey.Y)
 }
 
 func ParseECDSAPublickKey(pubKey []byte) (*ecdsa.PublicKey, error) {
-	x, y := elliptic.Unmarshal(elliptic.P224(), pubKey)
+	x, y := elliptic.Unmarshal(elliptic.P256(), pubKey)
 	if x == nil {
 		return nil, errors.New("invalid public key")
 	}
 
 	return &ecdsa.PublicKey{
-		Curve: elliptic.P224(),
+		Curve: elliptic.P256(),
 		X:     x,
 		Y:     y,
 	}, nil

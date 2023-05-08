@@ -77,12 +77,14 @@ func main() {
 
 	switch args[1] {
 	case "keyex":
-		pubKeyBytes := elliptic.Marshal(elliptic.P224(), pubKey.X, pubKey.Y)
+		pubKeyBytes := elliptic.Marshal(elliptic.P256(), pubKey.X, pubKey.Y)
 		packet, err := utils.MakePacket(template.KeyExchange, append(lockID, pubKeyBytes...), privKey)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
+
+		fmt.Println(hex.EncodeToString(pubKeyBytes))
 
 		fmt.Println("Packet:", strings.ToUpper(hex.EncodeToString(packet.Bytes())))
 		res, err := utils.SendUDPPacket(packet, "127.0.0.1", "8888")
@@ -91,7 +93,7 @@ func main() {
 			return
 		}
 
-		serverPublicKey, err := utils.ParseECDSAPublickKey(res.Data[16:])
+		serverPublicKey, err := utils.ParseECDSAPublickKey(res.Data[24:])
 		if err != nil {
 			fmt.Println(err)
 			return
