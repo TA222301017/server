@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-var RemotePort string = "8888"
+var RemotePort string = "8000"
 
 func SendUDPPacket(p *template.BasePacket, ipAddress string, port ...string) (*template.BasePacket, error) {
 	lockAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%s", ipAddress, RemotePort))

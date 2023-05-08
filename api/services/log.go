@@ -28,9 +28,9 @@ func GetAccessLog(p template.SearchParameter, location string, personel string) 
 	var data []template.AccessLogData = make([]template.AccessLogData, 0)
 
 	query = db.Where(`
-			location LIKE ? OR 
+			(location LIKE ? OR 
 			personel_name LIKE ? OR 
-			personel_id_number LIKE ? AND 
+			personel_id_number LIKE ?) AND 
 			timestamp BETWEEN ? AND ?
 		`, location, personel, personel, p.StartDate, p.EndDate)
 

@@ -190,12 +190,11 @@ func main() {
 					return
 				}
 
-				fmt.Println(hex.EncodeToString(packet.Data[:8]))
 				accessRuleID := binary.BigEndian.Uint64(packet.Data[:8])
 				lockID := packet.Data[8:24]
-				keyID := packet.Data[24:40]
-				startsAt := time.Unix(int64(binary.BigEndian.Uint64(packet.Data[40:48])), 0)
-				endsAt := time.Unix(int64(binary.BigEndian.Uint64(packet.Data[48:56])), 0)
+				keyID := packet.Data[40:56]
+				startsAt := time.Unix(int64(binary.BigEndian.Uint64(packet.Data[56:64])), 0)
+				endsAt := time.Unix(int64(binary.BigEndian.Uint64(packet.Data[64:72])), 0)
 
 				accessRules[accessRuleID] = accessRule{
 					ID:       accessRuleID,
@@ -226,9 +225,9 @@ func main() {
 
 				accessRuleID := binary.BigEndian.Uint64(packet.Data[:8])
 				lockID := packet.Data[8:24]
-				keyID := packet.Data[24:40]
-				startsAt := time.Unix(int64(binary.BigEndian.Uint64(packet.Data[40:48])), 0)
-				endsAt := time.Unix(int64(binary.BigEndian.Uint64(packet.Data[48:56])), 0)
+				keyID := packet.Data[40:56]
+				startsAt := time.Unix(int64(binary.BigEndian.Uint64(packet.Data[56:64])), 0)
+				endsAt := time.Unix(int64(binary.BigEndian.Uint64(packet.Data[64:72])), 0)
 
 				accessRules[accessRuleID] = accessRule{
 					ID:       accessRuleID,

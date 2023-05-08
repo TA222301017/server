@@ -64,9 +64,6 @@ func GetPersonels(p template.SearchParameter, keyword string, status string) ([]
 	keyword = "%" + keyword + "%"
 
 	var query *gorm.DB = db
-	if p.Limit > 0 {
-		query = db.Limit(limit).Offset(offset)
-	}
 
 	if status == "any" {
 		query = query.Where("name LIKE ? OR id_number LIKE ?", keyword, keyword)
@@ -79,8 +76,12 @@ func GetPersonels(p template.SearchParameter, keyword string, status string) ([]
 		return nil, nil, err
 	}
 
+	if p.Limit > 0 {
+		query = db.Limit(limit).Offset(offset)
+	}
+
 	var personels []models.Personel
-	if err := query.Preload("Key").Preload("Role").Find(&personels).Error; err != nil {
+	if err := query.Preload("Key").Preload("Role").Order("created_at DESC").Find(&personels).Error; err != nil {
 		return nil, nil, err
 	}
 
@@ -213,6 +214,12 @@ func EditPersonel(e template.EditPersonelRequest, personelID uint64) (*template.
 
 	if err := db.Save(&p).Error; err != nil {
 		return nil, err
+	}
+
+	if p.KeyID == 0 {
+		if err := db.Model(&models.Personel{}).Where("id = ?", p.ID).Updates(map[string]interface{}{"key_id": 0}).Error; err != nil {
+			return nil, err
+		}
 	}
 
 	data := template.PersonelData{
