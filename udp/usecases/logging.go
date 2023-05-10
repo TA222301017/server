@@ -27,6 +27,9 @@ func KeyExchange(p template.BasePacket, addr *net.UDPAddr) (*template.BasePacket
 		return nil, errors.New("packet too short")
 	}
 
+	fmt.Println(hex.EncodeToString(p.Data))
+	fmt.Println(hex.EncodeToString(p.Signature))
+
 	pubKey, err := utils.ParseECDSAPublickKey(p.Data[16:pLen])
 	if err != nil {
 		return nil, err

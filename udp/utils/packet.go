@@ -62,6 +62,12 @@ func ParsePacket(pBytes []byte, pLen int) (*template.BasePacket, error) {
 	}, nil
 }
 
+func reverseBytes(s []byte) {
+	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+		s[i], s[j] = s[j], s[i]
+	}
+}
+
 func VerifyPacket(packet []byte, pk *ecdsa.PublicKey) error {
 	packetLen := len(packet)
 
@@ -76,8 +82,10 @@ func VerifyPacket(packet []byte, pk *ecdsa.PublicKey) error {
 	signature := packet[packetLen-SIGNATURE_LEN:]
 	temp := packet[:packetLen-SIGNATURE_LEN]
 
-	hash := sha256.Sum256(temp)
-	if ecdsa.VerifyASN1(pk, hash[:], TrimSignature(signature)) {
+	h := sha256.Sum256(temp)
+	hash := h[:]
+
+	if ecdsa.VerifyASN1(pk, hash, TrimSignature(signature)) {
 		return nil
 	}
 

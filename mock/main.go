@@ -194,7 +194,7 @@ func main() {
 
 				accessRuleID := binary.BigEndian.Uint64(packet.Data[:8])
 				lockID := packet.Data[8:24]
-				keyID := packet.Data[40:56]
+				keyID := packet.Data[24:40]
 				startsAt := time.Unix(int64(binary.BigEndian.Uint64(packet.Data[56:64])), 0)
 				endsAt := time.Unix(int64(binary.BigEndian.Uint64(packet.Data[64:72])), 0)
 
@@ -227,7 +227,7 @@ func main() {
 
 				accessRuleID := binary.BigEndian.Uint64(packet.Data[:8])
 				lockID := packet.Data[8:24]
-				keyID := packet.Data[40:56]
+				keyID := packet.Data[24:40]
 				startsAt := time.Unix(int64(binary.BigEndian.Uint64(packet.Data[56:64])), 0)
 				endsAt := time.Unix(int64(binary.BigEndian.Uint64(packet.Data[64:72])), 0)
 
