@@ -18,11 +18,11 @@ func GetLocks(p template.SearchParameter, keyword string, status string) ([]mode
 
 	var query *gorm.DB
 	if status == "any" {
-		query = db.Where("label LIKE ? OR location LIKE ?", keyword, keyword)
+		query = db.Where("label LIKE ? OR location LIKE ? OR lock_id LIKE ? OR ip_address LIKE ?", keyword, keyword, keyword, keyword)
 	} else if status == "unused" {
-		query = db.Where("(label LIKE ? OR location LIKE ?) AND (plan_id = 0 OR plan_id = NULL)", keyword, keyword)
+		query = db.Where("(label LIKE ? OR location LIKE ? OR lock_id LIKE ? OR ip_address LIKE ?) AND (plan_id = 0 OR plan_id = NULL)", keyword, keyword, keyword, keyword)
 	} else {
-		query = db.Where("(label LIKE ? OR location LIKE ?) AND status = ?", keyword, keyword, status == "active")
+		query = db.Where("(label LIKE ? OR location LIKE ? OR lock_id LIKE ? OR ip_address LIKE ?) AND status = ?", keyword, keyword, keyword, keyword, status == "active")
 	}
 
 	var cnt int64

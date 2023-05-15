@@ -104,7 +104,7 @@ func SyncAccessRules(p template.BasePacket, addr *net.UDPAddr) (*template.BasePa
 
 	serverAccessRules := []models.AccessRule{}
 	serverAccessRulesMap := make(map[uint64]bool, 0)
-	db.Find(&serverAccessRules).Where("lock_id = ? AND ends_at <= ?", lockID, time.Now())
+	db.Find(&serverAccessRules).Where("lock_id = ? AND ends_at >= ?", lockID, time.Now())
 	for i := 0; i < (len(serverAccessRules)); i++ {
 		serverAccessRulesMap[serverAccessRules[i].ID] = false
 	}
