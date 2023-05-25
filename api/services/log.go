@@ -288,6 +288,9 @@ func CheckLock(lockID uint64) (*models.HealthcheckLog, error) {
 
 	var status models.HealthcheckLog
 	_, err := usecases.RequestHealthcheck(&lock)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 	status = models.HealthcheckLog{
 		LockID:    lock.ID,
 		Timestamp: time.Now(),

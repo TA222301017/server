@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
@@ -104,7 +105,8 @@ func LogAccessEvent(p template.BasePacket) (*template.BasePacket, error) {
 	pubKeyBytes, _ := hex.DecodeString(lock.PublicKey)
 	pubKey, _ := utils.ParseECDSAPublickKey(pubKeyBytes)
 	if err := utils.VerifyPacket(p.Bytes(), pubKey); err != nil {
-		return nil, errors.New("invalid packet signature")
+		p, _ := utils.MakePacket(template.LogAccessEvent, p.Data, setup.PrivateKey)
+		return p, errors.New("invalid packet signature")
 	}
 
 	var key models.Key
@@ -134,7 +136,7 @@ func LogAccessEvent(p template.BasePacket) (*template.BasePacket, error) {
 
 	gsetup.Channel.AccessMessage <- &accessLog
 
-	return utils.MakePacket(template.LogAccessEvent, p.Data, setup.PrivateKey)
+	return nil, nil
 }
 
 func LogRSSIEvent(p template.BasePacket) (*template.BasePacket, error) {
@@ -157,7 +159,8 @@ func LogRSSIEvent(p template.BasePacket) (*template.BasePacket, error) {
 	pubKeyBytes, _ := hex.DecodeString(lock.PublicKey)
 	pubKey, _ := utils.ParseECDSAPublickKey(pubKeyBytes)
 	if err := utils.VerifyPacket(p.Bytes(), pubKey); err != nil {
-		return nil, err
+		p, _ := utils.MakePacket(template.LogRSSIEvent, p.Data, setup.PrivateKey)
+		return p, err
 	}
 
 	var key models.Key
@@ -187,7 +190,7 @@ func LogRSSIEvent(p template.BasePacket) (*template.BasePacket, error) {
 
 	gsetup.Channel.RSSIMessage <- &rssiLog
 
-	return utils.MakePacket(template.LogRSSIEvent, p.Data, setup.PrivateKey)
+	return nil, nil
 }
 
 func RequestHealthcheck(lock *models.Lock) (*template.BasePacket, error) {
@@ -219,5 +222,13 @@ func RequestHealthcheck(lock *models.Lock) (*template.BasePacket, error) {
 		return nil, err
 	}
 
-	return res, utils.VerifyPacket(res.Bytes(), pubKey)
+	if !bytes.Equal(res.Data[:16], lockID) {
+		return res, errors.New("lock_id doesn't match")
+	}
+
+	if !bytes.Equal(res.Data[16:], utils.MarshalECDSAPublicKey(pubKey)) {
+		return res, errors.New("public_key doesn't match")
+	}
+
+	return res, nil
 }
