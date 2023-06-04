@@ -19,12 +19,11 @@ func AddAccessRule(accessRule models.AccessRule, lock models.Lock, key models.Ke
 	var data []byte = make([]byte, 8)
 
 	lockIDHex := utils.PadRightID([]byte(lock.LockID))
-	keyIDHex := utils.PadRightID([]byte(key.KeyID))
+	keyIDHex := utils.PadRightID(append([]byte{0xAA, 0xFE}, []byte(key.KeyID)...))
 	aesKeyHex, _ := hex.DecodeString(key.AESKey)
 
 	binary.BigEndian.PutUint64(data, accessRule.ID)
 	data = append(data, lockIDHex...)
-	data = append(data, 0xAA, 0xFE)
 	data = append(data, keyIDHex...)
 	data = append(data, aesKeyHex...)
 	data = binary.BigEndian.AppendUint64(data, uint64(accessRule.StartsAt.Unix()))
@@ -42,12 +41,11 @@ func EditAccessRule(accessRule models.AccessRule, lock models.Lock, key models.K
 	var data []byte = make([]byte, 8)
 
 	lockIDHex := utils.PadRightID([]byte(lock.LockID))
-	keyIDHex := utils.PadRightID([]byte(key.KeyID))
+	keyIDHex := utils.PadRightID(append([]byte{0xAA, 0xFE}, []byte(key.KeyID)...))
 	aesKeyHex, _ := hex.DecodeString(key.AESKey)
 
 	binary.BigEndian.PutUint64(data, accessRule.ID)
 	data = append(data, lockIDHex...)
-	data = append(data, 0xAA, 0xFE)
 	data = append(data, keyIDHex...)
 	data = append(data, aesKeyHex...)
 	data = binary.BigEndian.AppendUint64(data, uint64(accessRule.StartsAt.Unix()))
