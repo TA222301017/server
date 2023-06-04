@@ -31,12 +31,8 @@ func (a AddKeyRequest) Validate() error {
 		return errors.New("key_id must not be empty")
 	}
 
-	if len(a.KeyID) != 32 {
-		return errors.New("key_id must have length of 32 characters")
-	}
-
-	if _, err := hex.DecodeString(a.KeyID); err != nil {
-		return errors.New("key_id is not valid hexadecimal")
+	if len(a.KeyID) > 16 {
+		return errors.New("key_id must have length no more than 16 characters")
 	}
 
 	if len(a.AESKey) != 32 {
@@ -60,12 +56,8 @@ type EditKeyRequest struct {
 
 func (e EditKeyRequest) Validate() error {
 	if len(e.KeyID) != 0 {
-		if len(e.KeyID) != 32 {
-			return errors.New("key_id must have length of 32 characters")
-		}
-
-		if _, err := hex.DecodeString(e.KeyID); err != nil {
-			return errors.New("key_id is not valid hexadecimal")
+		if len(e.KeyID) > 16 {
+			return errors.New("key_id must have length no more than 16 characters")
 		}
 	}
 

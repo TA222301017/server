@@ -91,3 +91,33 @@ func VerifyPacket(packet []byte, pk *ecdsa.PublicKey) error {
 
 	return errors.New("invalid signature")
 }
+
+func TrimLeftID(ID []byte) []byte {
+	for i := 0; i < len(ID); i++ {
+		if ID[i] != 0x00 {
+			return ID[i:]
+		}
+	}
+
+	return ID
+}
+
+func PadLeftID(ID []byte) []byte {
+	padding := make([]byte, 16-len(ID))
+	return append(padding, ID...)
+}
+
+func TrimRightID(ID []byte) []byte {
+	for i := len(ID) - 1; i >= 0; i-- {
+		if ID[i] != 0x00 {
+			return ID[:i+1]
+		}
+	}
+
+	return ID
+}
+
+func PadRightID(ID []byte) []byte {
+	padding := make([]byte, 16-len(ID))
+	return append(ID, padding...)
+}

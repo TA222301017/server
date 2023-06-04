@@ -236,6 +236,23 @@ func EditPersonel(e template.EditPersonelRequest, personelID uint64) (*template.
 	return &data, nil
 }
 
+func DeletePersonel(personelID uint64) error {
+	db := setup.DB
+
+	var personel models.Personel
+	if err := db.First(&personel, personelID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+		return errors.New("perosnel not found")
+	}
+
+	db.Delete(&personel)
+
+	db.Delete(&models.AccessRule{}, "personel_id = ?", personelID)
+
+	db.Delete(&models.RSSILog{}, "personel_id = ?", personelID)
+
+	return nil
+}
+
 func GetRoles() []models.Role {
 	db := setup.DB
 

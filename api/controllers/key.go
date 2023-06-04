@@ -93,4 +93,20 @@ func RegisterKeyRoutes(app *gin.RouterGroup) {
 
 		utils.MakeResponseSuccess(c, data, nil)
 	})
+
+	router.DELETE("/:key_id", func(c *gin.Context) {
+		temp := c.Param("key_id")
+		keyID, err := strconv.ParseUint(temp, 10, 64)
+		if err != nil {
+			utils.ResponseBadRequest(c, err)
+			return
+		}
+
+		if err := services.DeleteKey(keyID); err != nil {
+			utils.ResponseServerError(c, err)
+			return
+		}
+
+		utils.MakeResponseSuccess(c, "ok", nil)
+	})
 }
