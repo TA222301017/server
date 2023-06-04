@@ -50,7 +50,7 @@ func main() {
 	}
 	privKey, err := utils.LoadECDSAPrivateKey("lock")
 	pubKey, err := utils.LoadECDSAPublicKey("lock")
-	lockID := randomBytes(16)
+	lockID := []byte("MOCK LOCK 000001")
 	keyID, _ := hex.DecodeString("DEADBEEFDEADBEEFBEEFDEADDEADBEEF")
 
 	if err != nil {

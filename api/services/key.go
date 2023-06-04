@@ -224,3 +224,24 @@ func EditKey(e template.EditKeyRequest, keyID uint64) (*models.Key, error) {
 
 	return &key, nil
 }
+
+func DeleteKey(keyID uint64) error {
+	db := setup.DB
+
+	var key models.Key
+	if err := db.First(&key, keyID).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+		return errors.New("key not found")
+	}
+
+	var personel models.Personel
+	if err := db.First(&personel, "key_id = ?", keyID).Error; err == nil {
+		db.Model(&personel).Updates(map[string]interface{}{"personel_id": 0})
+	}
+
+	db.Delete(&key)
+	db.Delete(&models.AccessRule{}, "key_id = ?", keyID)
+	db.Delete(&models.AccessLog{}, "key_id = ?", keyID)
+	db.Delete(&models.RSSILog{}, "key_id = ?", keyID)
+
+	return nil
+}

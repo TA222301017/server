@@ -10,7 +10,6 @@ import (
 	"server/udp/setup"
 	"server/udp/template"
 	"server/udp/utils"
-	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -19,8 +18,8 @@ import (
 func AddAccessRule(accessRule models.AccessRule, lock models.Lock, key models.Key) (*template.BasePacket, error) {
 	var data []byte = make([]byte, 8)
 
-	lockIDHex, _ := hex.DecodeString(lock.LockID)
-	keyIDHex, _ := hex.DecodeString(key.KeyID)
+	lockIDHex := utils.PadRightID([]byte(lock.LockID))
+	keyIDHex := utils.PadRightID(append([]byte{0xAA, 0xFE}, []byte(key.KeyID)...))
 	aesKeyHex, _ := hex.DecodeString(key.AESKey)
 
 	binary.BigEndian.PutUint64(data, accessRule.ID)
@@ -41,8 +40,8 @@ func AddAccessRule(accessRule models.AccessRule, lock models.Lock, key models.Ke
 func EditAccessRule(accessRule models.AccessRule, lock models.Lock, key models.Key) (*template.BasePacket, error) {
 	var data []byte = make([]byte, 8)
 
-	lockIDHex, err := hex.DecodeString(lock.LockID)
-	keyIDHex, err := hex.DecodeString(key.KeyID)
+	lockIDHex := utils.PadRightID([]byte(lock.LockID))
+	keyIDHex := utils.PadRightID(append([]byte{0xAA, 0xFE}, []byte(key.KeyID)...))
 	aesKeyHex, _ := hex.DecodeString(key.AESKey)
 
 	binary.BigEndian.PutUint64(data, accessRule.ID)
@@ -76,7 +75,7 @@ func DeleteAccessRule(accessRuleID uint64, ipAddress string) (*template.BasePack
 func SyncAccessRules(p template.BasePacket, addr *net.UDPAddr) (*template.BasePacket, error) {
 	db := gsetup.DB
 
-	lockID := strings.ToUpper(hex.EncodeToString(p.Data[:16]))
+	lockID := string(utils.TrimRightID(p.Data[:16]))
 
 	var lock models.Lock
 	if err := db.First(&lock, "lock_id = ?", lockID).Error; err != nil {

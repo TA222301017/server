@@ -12,7 +12,6 @@ import (
 	"server/udp/setup"
 	"server/udp/template"
 	"server/udp/utils"
-	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -21,15 +20,14 @@ import (
 func KeyExchange(p template.BasePacket, addr *net.UDPAddr) (*template.BasePacket, error) {
 	db := gsetup.DB
 
-	lockID := strings.ToUpper(hex.EncodeToString(p.Data[:16]))
+	fmt.Println((p.Data[:16]))
+	lockID := string(utils.TrimRightID(p.Data[:16]))
+	fmt.Println(lockID)
 	pLen := len(p.Data)
 
 	if pLen < 16 {
 		return nil, errors.New("packet too short")
 	}
-
-	fmt.Println(hex.EncodeToString(p.Data))
-	fmt.Println(hex.EncodeToString(p.Signature))
 
 	pubKey, err := utils.ParseECDSAPublickKey(p.Data[16:pLen])
 	if err != nil {
@@ -57,7 +55,7 @@ func KeyExchange(p template.BasePacket, addr *net.UDPAddr) (*template.BasePacket
 		lock = models.Lock{
 			LockID:    lockID,
 			IpAddress: addr.IP.String(),
-			Label:     fmt.Sprintf("Lock on %s", addr.IP.String()),
+			Label:     fmt.Sprintf("Lock named %s", lockID),
 			PublicKey: hex.EncodeToString(p.Data[16:pLen]),
 			Status:    true,
 		}
@@ -94,8 +92,8 @@ func LogAccessEvent(p template.BasePacket) (*template.BasePacket, error) {
 		return nil, errors.New("packet too short")
 	}
 
-	lockID := strings.ToUpper(hex.EncodeToString(p.Data[:16]))
-	keyID := strings.ToUpper(hex.EncodeToString(p.Data[16:32]))
+	lockID := string(utils.TrimRightID(p.Data[:16]))
+	keyID := string(utils.TrimRightID(p.Data[18:32]))
 
 	var lock models.Lock
 	if err := db.First(&lock, "lock_id = ?", lockID).Error; err != nil {
@@ -147,8 +145,8 @@ func LogRSSIEvent(p template.BasePacket) (*template.BasePacket, error) {
 		return nil, errors.New("packet too short")
 	}
 
-	lockID := strings.ToUpper(hex.EncodeToString(p.Data[:16]))
-	keyID := strings.ToUpper(hex.EncodeToString(p.Data[16:32]))
+	lockID := string(utils.TrimRightID(p.Data[:16]))
+	keyID := string(utils.TrimRightID(p.Data[18:32]))
 	rssi := int(int8(p.Data[32]))
 
 	var lock models.Lock
@@ -206,7 +204,7 @@ func RequestHealthcheck(lock *models.Lock) (*template.BasePacket, error) {
 		return nil, err
 	}
 
-	lockID, err := hex.DecodeString(lock.LockID)
+	lockID := utils.PadRightID([]byte(lock.LockID))
 	if err != nil {
 		return nil, err
 	}

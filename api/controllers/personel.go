@@ -93,4 +93,20 @@ func ResgisterPersonelRoutes(app *gin.RouterGroup) {
 
 		utils.MakeResponseSuccess(c, data, nil)
 	})
+
+	router.DELETE("/:personel_id", func(c *gin.Context) {
+		temp := c.Param("personel_id")
+		personelID, err := strconv.ParseUint(temp, 10, 64)
+		if err != nil {
+			utils.ResponseBadRequest(c, err)
+			return
+		}
+
+		if err := services.DeletePersonel(personelID); err != nil {
+			utils.ResponseServerError(c, err)
+			return
+		}
+
+		utils.MakeResponseSuccess(c, "ok", nil)
+	})
 }
